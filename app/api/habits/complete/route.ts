@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { nanoid } from "nanoid";
 import { updateStreakJob } from "@/jobs/updateStreaks";
-import { db } from "@/drizzle/src";
-import { habitLogs } from "@/drizzle/src/schema";
+import { db } from "@/drizzle";
+import { habitLogs } from "@/drizzle/schema";
 
 export async function POST(req: Request) {
   const session = await auth();

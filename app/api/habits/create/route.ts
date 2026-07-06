@@ -1,6 +1,6 @@
 
-import { db } from "@/drizzle/src";
-import { habits } from "@/drizzle/src/schema";
+import { db } from "@/drizzle";
+import { habits } from "@/drizzle/schema";
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
 
