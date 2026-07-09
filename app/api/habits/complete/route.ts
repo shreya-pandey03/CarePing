@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { nanoid } from "nanoid";
-import { updateStreakJob } from "@/jobs/updateStreaks";
+import { updateStreakJob } from "@/actions/updateStreaks";
 import { db } from "@/drizzle";
 import { habitLogs } from "@/drizzle/schema";
 
