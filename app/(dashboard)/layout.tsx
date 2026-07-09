@@ -1,22 +1,37 @@
-import Sidebar from "@/components/common/Sidebar";
+import { ReactNode } from "react";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import Navbar from "@/components/common/Navbar";
+import Sidebar from "@/components/common/Sidebar";
+import Footer from "@/components/common/Footer";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
-export default function DashboardLayout({
+interface DashboardLayoutProps {
+  children: ReactNode;
+}
+
+export default async function DashboardLayout({
   children,
-}: {
-  children: React.ReactNode;
-}) {
+}: DashboardLayoutProps) {
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect("/login");
+  }
+
   return (
-    <div className="flex min-h-screen">
+    <SidebarProvider>
       <Sidebar />
 
-      <div className="flex-1">
-        <Navbar />
+      <SidebarInset>
+        <Navbar user={session.user} />
 
-        <main className="p-6">
-          {children}
+        <main className="flex-1 p-6">
+          <div className="mx-auto max-w-7xl">{children}</div>
         </main>
-      </div>
-    </div>
+
+        <Footer />
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

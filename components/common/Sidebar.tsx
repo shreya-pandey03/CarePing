@@ -1,42 +1,128 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+import {
+  LayoutDashboard,
+  SquareCheckBig,
+  BarChart3,
+  Brain,
+  Lightbulb,
+  Goal,
+  Flame,
+  Bell,
+  User,
+  FileText,
+} from "lucide-react";
+
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
 
 const items = [
   {
-    name: "Dashboard",
-    href: "/dashboard",
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: LayoutDashboard,
   },
   {
-    name: "Habits",
-    href: "/habits",
+    title: "Habits",
+    url: "/habits",
+    icon: SquareCheckBig,
   },
   {
-    name: "Analytics",
-    href: "/habits/analytics",
+    title: "Analytics",
+    url: "/analytics",
+    icon: BarChart3,
   },
   {
-    name: "Reports",
-    href: "/reports/weekly",
+    title: "Reports",
+    url: "/reports",
+    icon: FileText,
+  },
+  {
+    title: "AI Insights",
+    url: "/insights",
+    icon: Brain,
+  },
+  {
+    title: "Recommendations",
+    url: "/recommendations",
+    icon: Lightbulb,
+  },
+  {
+    title: "Goals",
+    url: "/goals",
+    icon: Goal,
+  },
+  {
+    title: "Streaks",
+    url: "/streaks",
+    icon: Flame,
+  },
+  {
+    title: "Notifications",
+    url: "/notifications",
+    icon: Bell,
+  },
+  {
+    title: "Profile",
+    url: "/profile",
+    icon: User,
   },
 ];
 
-export default function Sidebar() {
-  return (
-    <aside className="w-64 border-r p-4">
-      <h1 className="mb-8 text-2xl font-bold">Habit Coach</h1>
+export default function AppSidebar() {
+  const pathname = usePathname();
 
-      <div className="space-y-2">
-        {items.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="block rounded-lg p-3 hover:bg-muted"
-          >
-            {item.name}
-          </Link>
-        ))}
-      </div>
-    </aside>
+  return (
+    <Sidebar>
+      <SidebarHeader className="border-b">
+        <div className="px-3 py-4">
+          <h2 className="text-xl font-bold">AI Habit Coach</h2>
+
+          <p className="text-sm text-muted-foreground">Build Better Habits</p>
+        </div>
+      </SidebarHeader>
+
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {items.map((item) => {
+                const Icon = item.icon;
+
+                const active = pathname === item.url;
+
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={active}>
+                      <Link href={item.url}>
+                        <Icon className="h-5 w-5" />
+
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter className="border-t p-4">
+        <p className="text-xs text-muted-foreground">© 2026 AI Habit Coach</p>
+      </SidebarFooter>
+    </Sidebar>
   );
 }
