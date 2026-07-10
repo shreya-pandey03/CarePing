@@ -1,0 +1,1 @@
+ALTER TABLE "ai_insights" DROP COLUMN "description";

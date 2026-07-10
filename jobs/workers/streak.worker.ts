@@ -12,12 +12,9 @@ interface StreakJobData {
 
 export const streakWorker = new Worker<StreakJobData>(
   "streaks",
-
   async (job: Job<StreakJobData>) => {
     const { habitId, userId } = job.data;
-
     console.log(`Processing streak for ${habitId}`);
-
     const logs = await db.query.habitLogs.findMany({
       where: eq(habitLogs.habitId, habitId),
       orderBy: [asc(habitLogs.completedAt)],
@@ -40,20 +37,17 @@ export const streakWorker = new Worker<StreakJobData>(
         .where(eq(streaks.habitId, habitId));
     } else {
       await db.insert(streaks).values({
+        id: crypto.randomUUID(),
         habitId,
-        userId,
         currentStreak,
         longestStreak,
       });
     }
-
     console.log(`Finished streak for ${habitId}`);
-
     return {
       success: true,
     };
   },
-
   {
     connection,
     concurrency: 5,

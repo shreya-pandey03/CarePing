@@ -8,6 +8,34 @@
       "when": 1783362909581,
       "tag": "0000_previous_sandman",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783667910078,
+      "tag": "0001_flawless_shotgun",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783668212941,
+      "tag": "0002_pink_pete_wisdom",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1783668326386,
+      "tag": "0003_lame_spectrum",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1783668724781,
+      "tag": "0004_optimal_nightshade",
+      "breakpoints": true
     }
   ]
 }

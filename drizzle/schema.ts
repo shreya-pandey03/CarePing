@@ -138,21 +138,17 @@ export const aiInsights = pgTable("ai_insights", {
     })
     .notNull(),
 
-  habitId: text("habit_id").references(() => habits.id, {
-    onDelete: "cascade",
-  }),
-
-  type: insightType("type").notNull(),
-
   title: text("title").notNull(),
 
-  description: text("description").notNull(),
+  summary: text("summary").notNull(),
 
-  confidence: real("confidence").default(0).notNull(),
+  content: text("content").notNull(),
+
+  createdAt: timestamp("created_at")
+    .defaultNow()
+    .notNull(),
 
   metadata: json("metadata"),
-
-  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const weeklyReports = pgTable("weekly_reports", {
@@ -342,6 +338,12 @@ export const streaks = pgTable(
   {
     id: text("id").primaryKey(),
 
+    userId: text("user_id")
+      .references(() => users.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
+
     habitId: text("habit_id")
       .references(() => habits.id, {
         onDelete: "cascade",
@@ -350,19 +352,15 @@ export const streaks = pgTable(
       .notNull(),
 
     currentStreak: integer("current_streak").default(0).notNull(),
-
     longestStreak: integer("longest_streak").default(0).notNull(),
-
     totalCompletions: integer("total_completions").default(0).notNull(),
-
     lastCompletedAt: timestamp("last_completed_at"),
-
     riskScore: integer("risk_score").default(0).notNull(),
-
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => ({
     habitUnique: uniqueIndex("habit_streak_unique").on(table.habitId),
+    userIndex: index("streaks_user_idx").on(table.userId),
   }),
 );
 
