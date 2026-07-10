@@ -35,16 +35,6 @@ export const recommendationType = pgEnum("recommendation_type", [
   "correlation",
 ]);
 
-export const notificationCategory = pgEnum("notification_category", [
-  "habit_reminder",
-  "goal_reminder",
-  "weekly_report",
-  "monthly_report",
-  "streak_warning",
-  "motivation",
-  "achievement",
-]);
-
 export const badgeRarity = pgEnum("badge_rarity", [
   "common",
   "rare",
@@ -144,15 +134,15 @@ export const aiInsights = pgTable("ai_insights", {
 
   content: text("content").notNull(),
 
-  createdAt: timestamp("created_at")
-    .defaultNow()
-    .notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 
   metadata: json("metadata"),
 });
 
 export const weeklyReports = pgTable("weekly_reports", {
-  id: text("id").primaryKey(),
+  id: text("id")
+    .$defaultFn(() => crypto.randomUUID())
+    .primaryKey(),
 
   userId: text("user_id")
     .references(() => users.id, {
@@ -170,9 +160,15 @@ export const weeklyReports = pgTable("weekly_reports", {
 
   completedHabits: integer("completed_habits").default(0).notNull(),
 
-  report: text("report").notNull(),
+  title: text("title").notNull(),
 
-  aiSummary: text("ai_summary"),
+  summary: text("summary").notNull(),
+
+  strengths: json("strengths").$type<string[]>().notNull(),
+
+  improvements: json("improvements").$type<string[]>().notNull(),
+
+  recommendations: json("recommendations").$type<string[]>().notNull(),
 
   generatedAt: timestamp("generated_at").defaultNow().notNull(),
 });
@@ -222,7 +218,9 @@ export const users = pgTable("user", {
 export const notifications = pgTable(
   "notifications",
   {
-    id: text("id").primaryKey(),
+    id: text("id")
+      .$defaultFn(() => crypto.randomUUID())
+      .primaryKey(),
 
     userId: text("user_id")
       .references(() => users.id, {
@@ -364,6 +362,16 @@ export const streaks = pgTable(
   }),
 );
 
+export const notificationCategory = pgEnum("notification_category", [
+  "achievement",
+  "motivation",
+  "habit_reminder",
+  "goal_reminder",
+  "weekly_report",
+  "monthly_report",
+  "streak_warning",
+]);
+
 export const accounts = pgTable(
   "account",
   {
@@ -454,7 +462,9 @@ export const goals = pgTable(
 );
 
 export const recommendations = pgTable("recommendations", {
-  id: text("id").primaryKey(),
+  id: text("id")
+    .$defaultFn(() => crypto.randomUUID())
+    .primaryKey(),
 
   userId: text("user_id")
     .references(() => users.id, {
