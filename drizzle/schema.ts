@@ -27,6 +27,18 @@ export const insightType = pgEnum("insight_type", [
   "motivation",
 ]);
 
+export const notificationCategory = pgEnum("notification_category", [
+  "achievement",
+  "motivation",
+  "habit_reminder",
+  "goal_reminder",
+  "weekly_report",
+  "monthly_report",
+  "streak_warning",
+  "recommendation",
+  "reminder",
+]);
+
 export const recommendationType = pgEnum("recommendation_type", [
   "daily",
   "weekly",
@@ -361,16 +373,6 @@ export const streaks = pgTable(
     userIndex: index("streaks_user_idx").on(table.userId),
   }),
 );
-
-export const notificationCategory = pgEnum("notification_category", [
-  "achievement",
-  "motivation",
-  "habit_reminder",
-  "goal_reminder",
-  "weekly_report",
-  "monthly_report",
-  "streak_warning",
-]);
 
 export const accounts = pgTable(
   "account",

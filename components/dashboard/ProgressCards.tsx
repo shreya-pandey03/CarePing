@@ -1,59 +1,40 @@
-import { Flame, CalendarCheck, Target, TrendingUp } from "lucide-react";
+"use client";
 
+import { CalendarDays, CalendarRange, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
 import { Progress } from "@/components/ui/progress";
 
 interface ProgressCardsProps {
-  data?: {
-    weeklyCompletion: number;
-    longestStreak: number;
-    goalProgress: number;
-    monthlyConsistency: number;
-  };
+  dailyProgress: number;
+  weeklyProgress: number;
+  monthlyProgress: number;
 }
 
 export default function ProgressCards({
-  data = {
-    weeklyCompletion: 0,
-    longestStreak: 0,
-    goalProgress: 0,
-    monthlyConsistency: 0,
-  },
+  dailyProgress,
+  weeklyProgress,
+  monthlyProgress,
 }: ProgressCardsProps) {
   const cards = [
     {
-      title: "Weekly Completion",
-      value: `${data.weeklyCompletion}%`,
-      progress: data.weeklyCompletion,
-      icon: CalendarCheck,
-      color: "text-green-500",
+      title: "Today's Progress",
+      value: dailyProgress,
+      icon: CalendarDays,
     },
     {
-      title: "Longest Streak",
-      value: `${data.longestStreak} Days`,
-      progress: Math.min(data.longestStreak, 100),
-      icon: Flame,
-      color: "text-orange-500",
+      title: "Weekly Progress",
+      value: weeklyProgress,
+      icon: CalendarRange,
     },
     {
-      title: "Goal Progress",
-      value: `${data.goalProgress}%`,
-      progress: data.goalProgress,
-      icon: Target,
-      color: "text-blue-500",
-    },
-    {
-      title: "Monthly Consistency",
-      value: `${data.monthlyConsistency}%`,
-      progress: data.monthlyConsistency,
-      icon: TrendingUp,
-      color: "text-violet-500",
+      title: "Monthly Progress",
+      value: monthlyProgress,
+      icon: Calendar,
     },
   ];
 
   return (
-    <section className="grid gap-6 md:grid-cols-2">
+    <section className="grid gap-4 lg:grid-cols-3">
       {cards.map((card) => {
         const Icon = card.icon;
 
@@ -62,17 +43,17 @@ export default function ProgressCards({
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">{card.title}</CardTitle>
 
-              <Icon className={`h-5 w-5 ${card.color}`} />
+              <Icon className="h-5 w-5 text-orange-500" />
             </CardHeader>
 
             <CardContent className="space-y-4">
-              <div className="text-3xl font-bold">{card.value}</div>
+              <Progress value={card.value} />
 
-              <Progress value={card.progress} className="h-2" />
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Progress</span>
 
-              <p className="text-sm text-muted-foreground">
-                Your current {card.title.toLowerCase()}.
-              </p>
+                <span className="font-semibold">{card.value.toFixed(1)}%</span>
+              </div>
             </CardContent>
           </Card>
         );

@@ -10,6 +10,7 @@
         "@google/genai": "^2.11.0",
         "@hookform/resolvers": "^5.4.0",
         "@neondatabase/serverless": "^1.1.0",
+        "@uiw/react-heat-map": "^2.3.4",
         "bullmq": "^5.79.3",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
@@ -471,6 +472,8 @@
     "@typescript-eslint/utils": ["@typescript-eslint/utils@8.62.1", "", { "dependencies": { "@eslint-community/eslint-utils": "^4.9.1", "@typescript-eslint/scope-manager": "8.62.1", "@typescript-eslint/types": "8.62.1", "@typescript-eslint/typescript-estree": "8.62.1" }, "peerDependencies": { "eslint": "^8.57.0 || ^9.0.0 || ^10.0.0", "typescript": ">=4.8.4 <6.1.0" } }, "sha512-sHtbPfuKNZCG+ih8SyjjucqRntSVmp8XgL5u6o9mAhiSn8ds5o/M/XdM0abweme2Tln3szOstOrZ9OXitvPh0g=="],
 
     "@typescript-eslint/visitor-keys": ["@typescript-eslint/visitor-keys@8.62.1", "", { "dependencies": { "@typescript-eslint/types": "8.62.1", "eslint-visitor-keys": "^5.0.0" } }, "sha512-4g3BLxfdTMy8iZG0MaBkadnlRrCJ74cQiFbyEVMrkwIoqdyaXXQM22cotDvrl4x28wgIZ9rEJRoM+mmhSJpJ1g=="],
+
+    "@uiw/react-heat-map": ["@uiw/react-heat-map@2.3.4", "", { "peerDependencies": { "@babel/runtime": ">=7.10.0", "react": ">=16.9.0", "react-dom": ">=16.9.0" } }, "sha512-E5kEtPXQKEHmYKtRsnlmu1kqBX43NIxMGWGz7rtXwOp0KCA0WFCh1w+WM2CalwAPWYKpptNpjqIB8wo7XyiLzg=="],
 
     "@unrs/resolver-binding-android-arm-eabi": ["@unrs/resolver-binding-android-arm-eabi@1.12.2", "", { "os": "android", "cpu": "arm" }, "sha512-g5T90pqg1bo/7mytQx6F4iBNC0Wsh9cu+z9veDbFjc7HjpesJFWD7QMS0NGStXM075+7dJPPVvBbpZlnrdpi/w=="],
 

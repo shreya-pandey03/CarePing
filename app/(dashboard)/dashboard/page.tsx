@@ -1,46 +1,182 @@
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+import { eq } from "drizzle-orm";
+import { db } from "@/drizzle";
+import {
+  habits,
+  habitLogs,
+  streaks,
+  weeklyReports,
+  notifications,
+} from "@/drizzle/schema";
 import DashboardStats from "@/components/dashboard/DashboardStats";
 import ProgressCards from "@/components/dashboard/ProgressCards";
 import WeeklySummary from "@/components/dashboard/WeeklySummary";
 import HabitHeatmap from "@/components/dashboard/HabitHeatmap";
+import RecentActivity from "@/components/dashboard/RecentActivity";
+import AIInsightCard from "@/components/ai/AIInsightCard";
+import MotivationCard from "@/components/ai/MotivationCard";
+import StreakPrediction from "@/components/ai/StreakPrediction";
+import { calculateCompletionRate, calculateConsistency } from "@/lib/analytics";
 
 export default async function DashboardPage() {
-  /**
-   * Week 1:
-   * Static UI
-   *
-   * Week 2:
-   * Replace these values with database queries.
-   */
+  const session = await auth();
 
-  const stats = {
-    totalHabits: 0,
-    completedToday: 0,
-    currentStreak: 0,
-    activeGoals: 0,
-  };
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  const userId = session.user.id;
+
+  // Load Data
+
+  const userHabits = await db.query.habits.findMany({
+    where: eq(habits.userId, userId),
+  });
+
+  const logs = await db.query.habitLogs.findMany({
+    where: eq(habitLogs.userId, userId),
+    orderBy: (logs, { desc }) => [desc(logs.completedAt)],
+  });
+
+  const userStreaks = await db.query.streaks.findMany({
+    where: eq(streaks.userId, userId),
+  });
+
+  const report = await db.query.weeklyReports.findFirst({
+    where: eq(weeklyReports.userId, userId),
+    orderBy: (reports, { desc }) => [desc(reports.createdAt)],
+  });
+
+  const recentNotifications = await db.query.notifications.findMany({
+    where: eq(notifications.userId, userId),
+    limit: 5,
+    orderBy: (notifications, { desc }) => [desc(notifications.createdAt)],
+  });
+
+  // Dashboard Stats
+
+  const totalHabits = userHabits.length;
+
+  const completedToday = logs.filter((log) => {
+    const today = new Date();
+
+    return log.completedAt.toDateString() === today.toDateString();
+  }).length;
+
+  const currentStreak =
+    userStreaks.length > 0
+      ? Math.max(...userStreaks.map((s) => s.currentStreak))
+      : 0;
+
+  const completionRate = calculateCompletionRate(
+    logs.length,
+    Math.max(totalHabits, 1),
+  );
+
+  const consistency = calculateConsistency(
+    userStreaks.map((s) => s.currentStreak),
+  );
+
+  // Heatmap
+
+  const heatmapData = logs.map((log) => ({
+    date: log.completedAt.toISOString().split("T")[0],
+    count: 1,
+  }));
+
+  // Activity Feed
+
+  const activities = recentNotifications.map((notification) => ({
+    id: notification.id,
+    title: notification.title,
+    description: notification.message,
+    type: "notification" as const,
+    createdAt: notification.createdAt,
+  }));
+
+  // Streak Predictions
+
+  const predictions = userHabits.map((habit) => {
+    const streak = userStreaks.find((s) => s.habitId === habit.id);
+
+    return {
+      habit: habit.title,
+      risk:
+        (streak?.currentStreak ?? 0) >= 14
+          ? "low"
+          : (streak?.currentStreak ?? 0) >= 5
+            ? "medium"
+            : "high",
+
+      score:
+        (streak?.currentStreak ?? 0) >= 14
+          ? 20
+          : (streak?.currentStreak ?? 0) >= 5
+            ? 55
+            : 85,
+
+      recommendation: "Stay consistent and complete today's habit.",
+    };
+  });
 
   return (
     <div className="space-y-8">
-      {/* Heading */}
-      <section>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+      <div>
+        <h1 className="text-3xl font-bold">Welcome back 👋</h1>
 
-        <p className="mt-2 text-muted-foreground">
-          Track your habits, monitor your streaks, and improve every day.
+        <p className="text-muted-foreground">
+          Here's your habit overview for today.
         </p>
-      </section>
+      </div>
 
-      {/* Stats */}
-      <DashboardStats stats={stats} />
+      <DashboardStats
+        totalHabits={totalHabits}
+        completedToday={completedToday}
+        currentStreak={currentStreak}
+        completionRate={completionRate}
+      />
 
-      {/* Progress */}
-      <ProgressCards />
+      <ProgressCards
+        dailyProgress={completionRate}
+        weeklyProgress={consistency}
+        monthlyProgress={completionRate}
+      />
 
-      {/* Weekly Summary */}
-      <WeeklySummary />
+      {report && (
+        <WeeklySummary
+          title={report.title}
+          summary={report.summary}
+          completionRate={completionRate}
+          bestStreak={currentStreak}
+          recommendations={report.recommendations ?? []}
+        />
+      )}
 
-      {/* Heatmap */}
-      <HabitHeatmap />
+      <div className="grid gap-6 xl:grid-cols-2">
+        <HabitHeatmap values={heatmapData} />
+
+        <RecentActivity activities={activities} />
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <AIInsightCard
+          title="AI Insight"
+          summary="You're maintaining excellent consistency. Completing your habits before noon has significantly improved your streak."
+          confidence={94}
+          createdAt={new Date()}
+        />
+
+        <MotivationCard
+          title="Today's Motivation"
+          message="Small actions repeated every day create extraordinary results. Keep your streak alive!"
+          streak={currentStreak}
+          completedToday={completedToday}
+          goalToday={totalHabits}
+        />
+      </div>
+
+      <StreakPrediction predictions={predictions} />
     </div>
   );
 }

@@ -1,15 +1,8 @@
 import { db } from "@/drizzle";
-import { notifications } from "@/drizzle/schema";
+import { notifications, notificationCategory } from "@/drizzle/schema";
 
 export type NotificationCategory =
-  | "habit_reminder"
-  | "goal_reminder"
-  | "weekly_report"
-  | "monthly_report"
-  | "streak_warning"
-  | "motivation"
-  | "achievement"
-  | "recommendation";
+  (typeof notificationCategory.enumValues)[number];
 
 export interface CreateNotificationInput {
   userId: string;
@@ -22,20 +15,12 @@ export interface CreateNotificationInput {
 
 export async function createNotification(input: CreateNotificationInput) {
   return db.insert(notifications).values({
-    id: crypto.randomUUID(),
-
     userId: input.userId,
-
     title: input.title,
-
     message: input.message,
-
     category: input.category,
-
     actionUrl: input.actionUrl ?? null,
-
     scheduledFor: input.scheduledFor ?? null,
-
     isRead: false,
   });
 }
@@ -47,15 +32,10 @@ export async function createReminderNotification(
 ) {
   return createNotification({
     userId,
-
     title: "Habit Reminder",
-
     message: `Don't forget to complete "${habitTitle}" today.`,
-
-    category: "reminder",
-
+    category: "habit_reminder",
     actionUrl: `/habits/${habitId}`,
-
     scheduledFor: new Date(),
   });
 }
@@ -66,13 +46,9 @@ export async function createAchievementNotification(
 ) {
   return createNotification({
     userId,
-
     title: "Achievement Unlocked",
-
     message: `Congratulations! You've reached a ${streak}-day streak.`,
-
     category: "achievement",
-
     actionUrl: "/dashboard",
   });
 }
@@ -80,13 +56,9 @@ export async function createAchievementNotification(
 export async function createWeeklyReportNotification(userId: string) {
   return createNotification({
     userId,
-
     title: "Weekly Report Ready",
-
     message: "Your personalized weekly habit report is now available.",
-
-    category: "report",
-
+    category: "weekly_report",
     actionUrl: "/reports/weekly",
   });
 }
@@ -94,14 +66,10 @@ export async function createWeeklyReportNotification(userId: string) {
 export async function createRecommendationNotification(userId: string) {
   return createNotification({
     userId,
-
     title: "New AI Recommendations",
-
     message:
       "We've generated new habit recommendations based on your recent progress.",
-
-    category: "recommendation",
-
+    category: "motivation",
     actionUrl: "/recommendations",
   });
 }
@@ -113,11 +81,8 @@ export async function createSystemNotification(
 ) {
   return createNotification({
     userId,
-
     title,
-
     message,
-
-    category: "system",
+    category: "motivation",
   });
 }
