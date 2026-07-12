@@ -8,7 +8,8 @@ export type NotificationCategory =
   | "monthly_report"
   | "streak_warning"
   | "motivation"
-  | "achievement";
+  | "achievement"
+  | "recommendation";
 
 export interface CreateNotificationInput {
   userId: string;
