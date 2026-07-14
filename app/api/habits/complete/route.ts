@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { nanoid } from "nanoid";
-import { updateStreakJob } from "@/actions/updateStreaks";
+import { updateStreaks } from "@/actions/updateStreaks";
 import { db } from "@/drizzle";
 import { habitLogs } from "@/drizzle/schema";
 
@@ -21,9 +21,7 @@ export async function POST(req: Request) {
     completedAt: new Date(),
   });
 
-  await updateStreakJob.add("update-streak", {
-    habitId,
-  });
+  await updateStreaks(habitId);
 
   return NextResponse.json({
     success: true,

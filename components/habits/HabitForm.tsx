@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 import { Switch } from "@/components/ui/switch";
+import { updateHabit } from "@/actions/updateHabit";
 
 import {
   Form,
@@ -37,9 +38,20 @@ const formSchema = z.object({
 
   description: z.string().optional(),
 
-  category: z.string(),
+  category: z.enum([
+    "custom",
+    "health",
+    "fitness",
+    "reading",
+    "learning",
+    "coding",
+    "career",
+    "finance",
+    "mindfulness",
+    "nutrition",
+  ]),
 
-  frequency: z.string(),
+  frequency: z.enum(["daily", "weekly", "monthly"]),
 
   targetDays: z.coerce.number().min(1).max(7),
 
@@ -51,12 +63,11 @@ const formSchema = z.object({
 type HabitFormValues = z.infer<typeof formSchema>;
 
 interface HabitFormProps {
+  habitId: string;
   defaultValues?: HabitFormValues;
-
-  onSubmit: (values: HabitFormValues) => Promise<void>;
 }
 
-export default function HabitForm({ defaultValues, onSubmit }: HabitFormProps) {
+export default function HabitForm({ defaultValues, habitId }: HabitFormProps) {
   const [pending, startTransition] = useTransition();
 
   const form = useForm<HabitFormValues>({
@@ -79,9 +90,16 @@ export default function HabitForm({ defaultValues, onSubmit }: HabitFormProps) {
     },
   });
 
-  function submit(values: HabitFormValues) {
+  async function submit(values: HabitFormValues) {
     startTransition(async () => {
-      await onSubmit(values);
+      const result = await updateHabit({
+        id: habitId,
+        ...values,
+      });
+
+      if (!result.success) {
+        console.error(result.message);
+      }
     });
   }
 

@@ -5,7 +5,6 @@ import { z } from "zod";
 import { generateInsight } from "@/lib/gemini";
 import { buildInsightPrompt } from "@/lib/promptBuilder";
 
-
 const habitSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -36,7 +35,7 @@ interface AIInsightResult {
 }
 
 export async function generateAIInsights(
-  input: Input
+  input: Input,
 ): Promise<AIInsightResult> {
   const validated = inputSchema.parse(input);
 
@@ -44,6 +43,7 @@ export async function generateAIInsights(
     habits: validated.habits,
     logs: validated.logs,
     streaks: validated.streaks,
+    goals: []
   });
 
   const response = await generateInsight(prompt);

@@ -9,7 +9,7 @@ import { db } from "@/drizzle";
 import {
   habitLogs,
   streaks,
-  insights,
+  aiInsights,
   recommendations,
   weeklyReports,
   monthlyReports,
@@ -44,7 +44,7 @@ export async function resetHabitData() {
       .where(eq(streaks.userId, userId));
 
     // Remove AI generated data
-    await tx.delete(insights).where(eq(insights.userId, userId));
+    await tx.delete(aiInsights).where(eq(aiInsights.userId, userId));
 
     await tx.delete(recommendations).where(eq(recommendations.userId, userId));
 

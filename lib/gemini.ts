@@ -147,3 +147,41 @@ export async function generateMotivation(
     throw error;
   }
 }
+
+export interface GoalOptimizationResult {
+  title: string;
+  description: string;
+  targetValue: number;
+  deadline: string;
+  reason: string;
+}
+
+export async function generateGoalOptimization(
+  prompt: string,
+): Promise<GoalOptimizationResult[]> {
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+
+      contents: prompt,
+
+      config: {
+        temperature: 0.7,
+        maxOutputTokens: 1024,
+        responseMimeType: "application/json",
+      },
+    });
+
+    const text = response.text;
+
+    if (!text) {
+      throw new Error("Gemini returned empty response");
+    }
+
+    return JSON.parse(text);
+  } catch (error) {
+    console.error("Goal Optimization Error:", error);
+
+    throw new Error("Failed to optimize goal");
+  }
+}

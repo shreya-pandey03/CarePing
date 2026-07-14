@@ -5,17 +5,13 @@ import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth";
 import { db } from "@/drizzle";
-
+import { habits, habitLogs, streaks } from "@/drizzle/schema";
 import {
-  habits,
-  habitLogs,
-  streaks,
-  weeklyReports,
-  monthlyReports,
-  insights,
-  recommendations,
-  notifications,
-} from "@/drizzle/schema";
+  aiQueue,
+  recommendationQueue,
+  weeklyReportQueue,
+  monthlyReportQueue,
+} from "@/jobs/queues";
 
 export async function deleteHabit(habitId: string) {
   const session = await auth();
@@ -37,29 +33,45 @@ export async function deleteHabit(habitId: string) {
     }
 
     await db.transaction(async (tx) => {
+      // Delete all logs
       await tx.delete(habitLogs).where(eq(habitLogs.habitId, habitId));
 
+      // Delete streak
       await tx.delete(streaks).where(eq(streaks.habitId, habitId));
 
-      await tx.delete(weeklyReports).where(eq(weeklyReports.habitId, habitId));
-
-      await tx
-        .delete(monthlyReports)
-        .where(eq(monthlyReports.habitId, habitId));
-
-      await tx.delete(insights).where(eq(insights.habitId, habitId));
-
-      await tx
-        .delete(recommendations)
-        .where(eq(recommendations.habitId, habitId));
-
-      await tx.delete(notifications).where(eq(notifications.habitId, habitId));
-
+      // Delete habit
       await tx.delete(habits).where(eq(habits.id, habitId));
     });
 
+    // Queue regeneration jobs
+    try {
+      await Promise.all([
+        aiQueue.add("generate-ai-insights", {
+          userId: session.user.id,
+        }),
+
+        recommendationQueue.add("generate-recommendations", {
+          userId: session.user.id,
+        }),
+
+        weeklyReportQueue.add("refresh-weekly-report", {
+          userId: session.user.id,
+        }),
+
+        monthlyReportQueue.add("refresh-monthly-report", {
+          userId: session.user.id,
+        }),
+      ]);
+    } catch (queueError) {
+      console.error("Queue Error:", queueError);
+    }
+
     revalidatePath("/dashboard");
     revalidatePath("/habits");
+    revalidatePath("/analytics");
+    revalidatePath("/reports");
+    revalidatePath("/recommendations");
+    revalidatePath("/insights");
 
     return {
       success: true,

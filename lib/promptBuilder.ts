@@ -1,8 +1,17 @@
+/*habit report prompt */
 export interface HabitPromptData {
   habits: {
     id: string;
     title: string;
     category: string;
+  }[];
+
+  goals: {
+    id: string;
+    title: string;
+    targetValue: number;
+    currentValue: number;
+    status: string;
   }[];
 
   logs: {
@@ -15,15 +24,8 @@ export interface HabitPromptData {
   }[];
 }
 
-/**
- * -----------------------------
- * AI Insight Prompt
- * -----------------------------
- */
-
-export function buildInsightPrompt(
-  data: HabitPromptData
-) {
+/* AI Insight Prompt*/
+export function buildInsightPrompt(data: HabitPromptData) {
   return `
 You are an AI Habit Coach.
 
@@ -59,15 +61,8 @@ Rules:
 `;
 }
 
-/**
- * -----------------------------
- * Weekly Report Prompt
- * -----------------------------
- */
-
-export function buildWeeklyReportPrompt(
-  data: HabitPromptData
-) {
+/* Weekly Report Prompt*/
+export function buildWeeklyReportPrompt(data: HabitPromptData) {
   return `
 You are an AI productivity coach.
 
@@ -105,15 +100,8 @@ Rules:
 `;
 }
 
-/**
- * -----------------------------
- * Monthly Report Prompt
- * -----------------------------
- */
-
-export function buildMonthlyReportPrompt(
-  data: HabitPromptData
-) {
+/* Monthly Report Prompt*/
+export function buildMonthlyReportPrompt(data: HabitPromptData) {
   return `
 Generate a monthly performance report.
 
@@ -142,51 +130,38 @@ Return JSON only.
 `;
 }
 
-/**
- * -----------------------------
- * Daily Recommendation Prompt
- * -----------------------------
- */
-
-export function buildRecommendationPrompt(
-  data: HabitPromptData
-) {
+/* Daily Recommendation Prompt*/
+export function buildRecommendationPrompt(data: HabitPromptData) {
   return `
-You are an AI habit coach.
+You are an AI Habit Coach.
 
-Based on the following data,
+Analyze the user's habits, goals and streaks.
 
 ${JSON.stringify(data, null, 2)}
 
-Generate JSON only.
+Return ONLY valid JSON.
 
 {
-"recommendations":[
-"",
-"",
-""
-]
+  "recommendations": [
+    {
+      "title": "",
+      "description": "",
+      "priority": 1
+    }
+  ]
 }
 
-Recommendations should:
+Rules:
 
-- Improve consistency
-- Reduce missed habits
-- Increase streaks
-- Be realistic
+- Give 3 recommendations.
+- Priority must be between 1 and 5.
+- No markdown.
+- JSON only.
 `;
 }
 
-/**
- * -----------------------------
- * Goal Optimization Prompt
- * -----------------------------
- */
-
-export function buildGoalPrompt(
-  goal: string,
-  data: HabitPromptData
-) {
+/* Goal Optimization Prompt*/
+export function buildGoalPrompt(goal: string, data: HabitPromptData) {
   return `
 Current Goal
 
@@ -205,15 +180,8 @@ Return JSON
 `;
 }
 
-/**
- * -----------------------------
- * New Habit Suggestion Prompt
- * -----------------------------
- */
-
-export function buildNewHabitPrompt(
-  data: HabitPromptData
-) {
+/*New Habit Suggestion Prompt*/
+export function buildNewHabitPrompt(data: HabitPromptData) {
   return `
 Analyze this user.
 
@@ -233,15 +201,8 @@ Return JSON.
 `;
 }
 
-/**
- * -----------------------------
- * Habit Correlation Prompt
- * -----------------------------
- */
-
-export function buildCorrelationPrompt(
-  data: HabitPromptData
-) {
+/*Habit Correlation Prompt*/
+export function buildCorrelationPrompt(data: HabitPromptData) {
   return `
 Analyze correlations between habits.
 
@@ -259,15 +220,8 @@ Return JSON.
 `;
 }
 
-/**
- * -----------------------------
- * Motivation Prompt
- * -----------------------------
- */
-
-export function buildMotivationPrompt(
-  currentStreak: number
-) {
+/* Motivation Prompt*/
+export function buildMotivationPrompt(currentStreak: number) {
   return `
 Current Streak:
 
@@ -282,5 +236,117 @@ Return JSON.
 }
 
 Keep it under 40 words.
+`;
+}
+
+/* goalsuggestion prompt */
+export function buildGoalSuggestionPrompt(data: {
+  goals: any[];
+  habits: any[];
+  streaks: any[];
+}) {
+  return `
+You are an AI Habit Coach.
+
+Analyze the user's goals, habits and streaks.
+
+${JSON.stringify(data, null, 2)}
+
+Return ONLY valid JSON.
+
+{
+  "suggestions": [
+    {
+      "title": "",
+      "description": "",
+      "targetValue": 30,
+      "deadline": "2026-08-01",
+      "reason": ""
+    }
+  ]
+}
+
+Rules:
+- Suggest 3 goals.
+- Make them realistic.
+- Return JSON only.
+`;
+}
+
+export function buildHabitSuggestionPrompt(data: {
+  habits: any[];
+  goals: any[];
+  streaks: any[];
+}) {
+  return `
+You are an AI Habit Coach.
+
+Analyze the user's habits, goals and streaks.
+
+${JSON.stringify(data, null, 2)}
+
+Return ONLY valid JSON.
+
+{
+  "suggestions": [
+    {
+      "title": "",
+      "description": "",
+      "category": "health",
+      "frequency": "daily",
+      "reason": ""
+    }
+  ]
+}
+
+Rules:
+
+- Suggest exactly 3 habits.
+- Frequency must be daily, weekly or monthly.
+- Category must match the existing habit categories.
+- Return JSON only.
+`;
+}
+
+export function buildGoalOptimizationPrompt(data: {
+  goals: {
+    title: string;
+    description: string | null;
+    targetValue: number;
+    currentValue: number;
+    status: string;
+  }[];
+}) {
+  return `
+You are an AI goal optimization coach.
+
+Analyze the user's current goals.
+
+Goals:
+
+${JSON.stringify(data.goals, null, 2)}
+
+
+Suggest optimized goals.
+
+Return JSON only.
+
+[
+ {
+   "title":"",
+   "description":"",
+   "targetValue":0,
+   "deadline":"",
+   "reason":""
+ }
+]
+
+
+Rules:
+
+- Make goals realistic.
+- Improve consistency.
+- Break large goals into achievable targets.
+- Give practical deadlines.
 `;
 }

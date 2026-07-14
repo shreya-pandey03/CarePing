@@ -3,9 +3,7 @@ import { eq } from "drizzle-orm";
 
 import { auth } from "@/auth";
 import { db } from "@/drizzle";
-
 import { recommendations } from "@/drizzle/schema";
-
 import {
   Card,
   CardContent,
@@ -13,7 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
 import { Badge } from "@/components/ui/badge";
 
 export default async function RecommendationsPage() {
@@ -61,12 +58,14 @@ export default async function RecommendationsPage() {
                   <Badge>{recommendation.priority}</Badge>
                 </div>
 
-                <CardDescription>{recommendation.category}</CardDescription>
+                <CardDescription className="capitalize">
+                  {recommendation.type}
+                </CardDescription>
               </CardHeader>
 
               <CardContent className="space-y-4">
                 <p className="leading-7 text-muted-foreground">
-                  {recommendation.recommendation}
+                  {recommendation.description}
                 </p>
 
                 <div className="text-xs text-muted-foreground">

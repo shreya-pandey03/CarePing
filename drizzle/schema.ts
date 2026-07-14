@@ -56,17 +56,11 @@ export const badgeRarity = pgEnum("badge_rarity", [
 
 export const badges = pgTable("badges", {
   id: text("id").primaryKey(),
-
   name: text("name").notNull(),
-
   description: text("description"),
-
   icon: text("icon"),
-
   rarity: badgeRarity("rarity").default("common").notNull(),
-
   requiredValue: integer("required_value").default(1).notNull(),
-
   createdAt: timestamp("created_at", {
     mode: "date",
   })
@@ -78,19 +72,16 @@ export const userBadges = pgTable(
   "user_badges",
   {
     id: text("id").primaryKey(),
-
     userId: text("user_id")
       .references(() => users.id, {
         onDelete: "cascade",
       })
       .notNull(),
-
     badgeId: text("badge_id")
       .references(() => badges.id, {
         onDelete: "cascade",
       })
       .notNull(),
-
     earnedAt: timestamp("earned_at", {
       mode: "date",
     })
@@ -107,47 +98,32 @@ export const userBadges = pgTable(
 
 export const monthlyReports = pgTable("monthly_reports", {
   id: text("id").primaryKey(),
-
   userId: text("user_id")
     .references(() => users.id, {
       onDelete: "cascade",
     })
     .notNull(),
-
   month: integer("month").notNull(),
-
   year: integer("year").notNull(),
-
   completionRate: real("completion_rate").default(0).notNull(),
-
   totalHabits: integer("total_habits").default(0).notNull(),
-
   completedHabits: integer("completed_habits").default(0).notNull(),
-
   report: text("report").notNull(),
-
   aiSummary: text("ai_summary"),
-
   generatedAt: timestamp("generated_at").defaultNow().notNull(),
 });
 
 export const aiInsights = pgTable("ai_insights", {
   id: text("id").primaryKey(),
-
   userId: text("user_id")
     .references(() => users.id, {
       onDelete: "cascade",
     })
     .notNull(),
-
   title: text("title").notNull(),
-
   summary: text("summary").notNull(),
-
   content: text("content").notNull(),
-
   createdAt: timestamp("created_at").defaultNow().notNull(),
-
   metadata: json("metadata"),
 });
 
@@ -155,33 +131,21 @@ export const weeklyReports = pgTable("weekly_reports", {
   id: text("id")
     .$defaultFn(() => crypto.randomUUID())
     .primaryKey(),
-
   userId: text("user_id")
     .references(() => users.id, {
       onDelete: "cascade",
     })
     .notNull(),
-
   weekStart: timestamp("week_start").notNull(),
-
   weekEnd: timestamp("week_end").notNull(),
-
   completionRate: real("completion_rate").default(0).notNull(),
-
   totalHabits: integer("total_habits").default(0).notNull(),
-
   completedHabits: integer("completed_habits").default(0).notNull(),
-
   title: text("title").notNull(),
-
   summary: text("summary").notNull(),
-
   strengths: json("strengths").$type<string[]>().notNull(),
-
   improvements: json("improvements").$type<string[]>().notNull(),
-
   recommendations: json("recommendations").$type<string[]>().notNull(),
-
   generatedAt: timestamp("generated_at").defaultNow().notNull(),
 });
 
@@ -217,14 +181,13 @@ export const goalStatus = pgEnum("goal_status", [
   "paused",
 ]);
 
-export const users = pgTable("user", {
+export const users = pgTable("users", {
   id: text("id").primaryKey(),
   name: text("name"),
-  email: text("email").unique(),
-  emailVerified: timestamp("email_verified", {
-    mode: "date",
-  }),
+  email: text("email").notNull().unique(),
+  emailVerified: timestamp("email_verified"),
   image: text("image"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const notifications = pgTable(
@@ -233,31 +196,22 @@ export const notifications = pgTable(
     id: text("id")
       .$defaultFn(() => crypto.randomUUID())
       .primaryKey(),
-
     userId: text("user_id")
       .references(() => users.id, {
         onDelete: "cascade",
       })
       .notNull(),
-
     title: text("title").notNull(),
-
     message: text("message").notNull(),
-
     category: notificationCategory("category").notNull(),
-
     isRead: boolean("is_read").default(false).notNull(),
-
     actionUrl: text("action_url"),
-
     scheduledFor: timestamp("scheduled_for", {
       mode: "date",
     }),
-
     sentAt: timestamp("sent_at", {
       mode: "date",
     }),
-
     createdAt: timestamp("created_at", {
       mode: "date",
     })
@@ -273,35 +227,22 @@ export const habits = pgTable(
   "habits",
   {
     id: text("id").primaryKey(),
-
     userId: text("user_id")
       .references(() => users.id, {
         onDelete: "cascade",
       })
       .notNull(),
-
     title: text("title").notNull(),
-
     description: text("description"),
-
     category: habitCategory("category").default("custom").notNull(),
-
     frequency: habitFrequency("frequency").default("daily").notNull(),
-
     targetDays: integer("target_days").default(1).notNull(),
-
     color: text("color"),
-
     icon: text("icon"),
-
     reminderTime: text("reminder_time"),
-
     active: boolean("active").default(true).notNull(),
-
     archived: boolean("archived").default(false).notNull(),
-
     createdAt: timestamp("created_at").defaultNow().notNull(),
-
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => ({
@@ -313,32 +254,24 @@ export const habitLogs = pgTable(
   "habit_logs",
   {
     id: text("id").primaryKey(),
-
     habitId: text("habit_id")
       .references(() => habits.id, {
         onDelete: "cascade",
       })
       .notNull(),
-
     userId: text("user_id")
       .references(() => users.id, {
         onDelete: "cascade",
       })
       .notNull(),
-
     completed: boolean("completed").default(true).notNull(),
-
     value: integer("value"),
-
     notes: text("notes"),
-
     completedAt: timestamp("completed_at").defaultNow().notNull(),
-
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => ({
     habitIdx: index("log_habit_idx").on(table.habitId),
-
     userIdx: index("log_user_idx").on(table.userId),
   }),
 );
@@ -347,20 +280,17 @@ export const streaks = pgTable(
   "streaks",
   {
     id: text("id").primaryKey(),
-
     userId: text("user_id")
       .references(() => users.id, {
         onDelete: "cascade",
       })
       .notNull(),
-
     habitId: text("habit_id")
       .references(() => habits.id, {
         onDelete: "cascade",
       })
       .unique()
       .notNull(),
-
     currentStreak: integer("current_streak").default(0).notNull(),
     longestStreak: integer("longest_streak").default(0).notNull(),
     totalCompletions: integer("total_completions").default(0).notNull(),
@@ -416,14 +346,11 @@ export const verificationTokens = pgTable(
   "verification_token",
   {
     identifier: text("identifier").notNull(),
-
     token: text("token").notNull(),
-
     expires: timestamp("expires", {
       mode: "date",
     }).notNull(),
   },
-
   (table) => ({
     compositePk: primaryKey({
       columns: [table.identifier, table.token],
@@ -435,27 +362,18 @@ export const goals = pgTable(
   "goals",
   {
     id: text("id").primaryKey(),
-
     userId: text("user_id")
       .references(() => users.id, {
         onDelete: "cascade",
       })
       .notNull(),
-
     title: text("title").notNull(),
-
     description: text("description"),
-
     targetValue: integer("target_value").default(30).notNull(),
-
     currentValue: integer("current_value").default(0).notNull(),
-
     status: goalStatus("status").default("active").notNull(),
-
     deadline: timestamp("deadline"),
-
     createdAt: timestamp("created_at").defaultNow().notNull(),
-
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => ({
@@ -467,57 +385,42 @@ export const recommendations = pgTable("recommendations", {
   id: text("id")
     .$defaultFn(() => crypto.randomUUID())
     .primaryKey(),
-
   userId: text("user_id")
     .references(() => users.id, {
       onDelete: "cascade",
     })
     .notNull(),
-
   habitId: text("habit_id").references(() => habits.id, {
     onDelete: "cascade",
   }),
-
   type: recommendationType("type").notNull(),
-
   title: text("title").notNull(),
-
   description: text("description").notNull(),
-
   priority: integer("priority").default(1).notNull(),
-
   accepted: boolean("accepted").default(false).notNull(),
-
   dismissed: boolean("dismissed").default(false).notNull(),
-
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const habitCorrelations = pgTable("habit_correlations", {
   id: text("id").primaryKey(),
-
   userId: text("user_id")
     .references(() => users.id, {
       onDelete: "cascade",
     })
     .notNull(),
-
   habitAId: text("habit_a_id")
     .references(() => habits.id, {
       onDelete: "cascade",
     })
     .notNull(),
-
   habitBId: text("habit_b_id")
     .references(() => habits.id, {
       onDelete: "cascade",
     })
     .notNull(),
-
   correlationScore: real("correlation_score").default(0).notNull(),
-
   insight: text("insight"),
-
   createdAt: timestamp("created_at", {
     mode: "date",
   })

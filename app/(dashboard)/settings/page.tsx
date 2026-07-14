@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
-
 import ProfileForm from "@/components/settings/ProfileForm";
 import ThemeSettings from "@/components/settings/ThemeSettings";
 import NotificationSettings from "@/components/settings/NotificationSettings";
@@ -35,9 +34,7 @@ export default async function SettingsPage() {
       />
 
       <ThemeSettings />
-
       <NotificationSettings />
-
       <AccountSettings />
     </div>
   );

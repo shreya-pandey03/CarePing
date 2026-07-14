@@ -1,11 +1,7 @@
-export { auth as middleware } from "@/auth";
+export { auth as middleware } from "./auth";
 
 export const config = {
   matcher: [
-    /*
-     * Protect every dashboard route.
-     */
-
     "/dashboard/:path*",
     "/habits/:path*",
     "/analytics/:path*",

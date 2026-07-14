@@ -74,8 +74,10 @@ export async function completeHabit(input: CompleteHabitInput) {
     // Database Transaction
     await db.transaction(async (tx) => {
       await tx.insert(habitLogs).values({
+        id: crypto.randomUUID(),
         habitId,
         userId: session.user.id,
+        completed: true,
         completedAt: new Date(),
       });
 
@@ -101,10 +103,14 @@ export async function completeHabit(input: CompleteHabitInput) {
           .where(eq(streaks.habitId, habitId));
       } else {
         await tx.insert(streaks).values({
-          habitId,
+          id: crypto.randomUUID(),
           userId: session.user.id,
+          habitId,
           currentStreak,
           longestStreak,
+          totalCompletions: logs.length,
+          lastCompletedAt: new Date(),
+          riskScore: 0,
         });
       }
 

@@ -6,7 +6,6 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   const body = await req.json();
-
   const { userId, title, description, category, frequency } = body;
 
   await db.insert(habits).values({

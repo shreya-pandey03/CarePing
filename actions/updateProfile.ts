@@ -11,7 +11,12 @@ import { users } from "@/drizzle/schema";
 const updateProfileSchema = z.object({
   name: z.string().min(2, "Name must contain at least 2 characters.").max(100),
 
-  image: z.string().url("Invalid image URL.").or(z.literal("")).optional(),
+  image: z
+    .string()
+    .url("Invalid image URL.")
+    .or(z.literal(""))
+    .nullable()
+    .optional(),
 });
 
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
@@ -25,20 +30,34 @@ export async function updateProfile(input: UpdateProfileInput) {
 
   const data = updateProfileSchema.parse(input);
 
-  await db
-    .update(users)
-    .set({
-      name: data.name,
-      image: data.image || null,
-      updatedAt: new Date(),
-    })
-    .where(eq(users.id, session.user.id));
+  try {
+    await db
+      .update(users)
+      .set({
+        name: data.name,
 
-  revalidatePath("/settings");
-  revalidatePath("/dashboard");
+        image: data.image && data.image.length > 0 ? data.image : null,
 
-  return {
-    success: true,
-    message: "Profile updated successfully.",
-  };
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, session.user.id));
+
+    revalidatePath("/settings");
+
+    revalidatePath("/dashboard");
+
+    return {
+      success: true,
+
+      message: "Profile updated successfully.",
+    };
+  } catch (error) {
+    console.error("Update Profile Error:", error);
+
+    return {
+      success: false,
+
+      message: "Failed to update profile.",
+    };
+  }
 }

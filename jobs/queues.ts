@@ -64,3 +64,12 @@ export const notificationQueue = new Queue("notifications", {
 export const streakQueue = new Queue("streaks", {
   connection,
 });
+
+export const monthlyReportQueue = new Queue("monthly-reports", {
+  connection,
+  defaultJobOptions: {
+    removeOnComplete: 50,
+    removeOnFail: 100,
+    attempts: 3,
+  },
+});

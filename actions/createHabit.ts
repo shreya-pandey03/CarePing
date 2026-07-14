@@ -8,15 +8,26 @@ import { db } from "@/drizzle";
 import { habits } from "@/drizzle/schema";
 
 const createHabitSchema = z.object({
-  title: z.string().min(3).max(100),
+  title: z.string().min(1),
 
   description: z.string().optional(),
 
-  category: z.string().min(1),
+  category: z.enum([
+    "custom",
+    "health",
+    "fitness",
+    "reading",
+    "learning",
+    "coding",
+    "career",
+    "finance",
+    "mindfulness",
+    "nutrition",
+  ]),
 
   frequency: z.enum(["daily", "weekly", "monthly"]),
 
-  targetDays: z.number().min(1).max(7),
+  targetDays: z.number().min(1),
 
   reminderTime: z.string().optional(),
 
@@ -36,6 +47,8 @@ export async function createHabit(input: CreateHabitInput) {
 
   try {
     await db.insert(habits).values({
+      id: crypto.randomUUID(),
+
       userId: session.user.id,
 
       title: data.title,
@@ -48,7 +61,7 @@ export async function createHabit(input: CreateHabitInput) {
 
       targetDays: data.targetDays,
 
-      reminderTime: data.reminderTime || null,
+      reminderTime: data.reminderTime ?? null,
 
       active: data.active,
     });

@@ -1,7 +1,9 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
+
 import { db } from "@/drizzle";
+
 import {
   habits,
   habitLogs,
@@ -9,14 +11,17 @@ import {
   weeklyReports,
   notifications,
 } from "@/drizzle/schema";
+
 import DashboardStats from "@/components/dashboard/DashboardStats";
 import ProgressCards from "@/components/dashboard/ProgressCards";
 import WeeklySummary from "@/components/dashboard/WeeklySummary";
 import HabitHeatmap from "@/components/dashboard/HabitHeatmap";
 import RecentActivity from "@/components/dashboard/RecentActivity";
+
 import AIInsightCard from "@/components/ai/AIInsightCard";
 import MotivationCard from "@/components/ai/MotivationCard";
 import StreakPrediction from "@/components/ai/StreakPrediction";
+
 import { calculateCompletionRate, calculateConsistency } from "@/lib/analytics";
 
 export default async function DashboardPage() {
@@ -28,7 +33,7 @@ export default async function DashboardPage() {
 
   const userId = session.user.id;
 
-  // Load Data
+  // Load User Data
 
   const userHabits = await db.query.habits.findMany({
     where: eq(habits.userId, userId),
@@ -36,6 +41,7 @@ export default async function DashboardPage() {
 
   const logs = await db.query.habitLogs.findMany({
     where: eq(habitLogs.userId, userId),
+
     orderBy: (logs, { desc }) => [desc(logs.completedAt)],
   });
 
@@ -43,15 +49,22 @@ export default async function DashboardPage() {
     where: eq(streaks.userId, userId),
   });
 
+  // Weekly AI Report
+
   const report = await db.query.weeklyReports.findFirst({
     where: eq(weeklyReports.userId, userId),
-    orderBy: (reports, { desc }) => [desc(reports.createdAt)],
+
+    orderBy: (reports, { desc }) => [desc(reports.generatedAt)],
   });
+
+  // Notifications
 
   const recentNotifications = await db.query.notifications.findMany({
     where: eq(notifications.userId, userId),
+
     limit: 5,
-    orderBy: (notifications, { desc }) => [desc(notifications.createdAt)],
+
+    orderBy: (notification, { desc }) => [desc(notification.createdAt)],
   });
 
   // Dashboard Stats
@@ -82,6 +95,7 @@ export default async function DashboardPage() {
 
   const heatmapData = logs.map((log) => ({
     date: log.completedAt.toISOString().split("T")[0],
+
     count: 1,
   }));
 
@@ -89,34 +103,54 @@ export default async function DashboardPage() {
 
   const activities = recentNotifications.map((notification) => ({
     id: notification.id,
+
     title: notification.title,
+
     description: notification.message,
+
     type: "notification" as const,
+
     createdAt: notification.createdAt,
   }));
 
-  // Streak Predictions
+  // Streak Prediction
 
-  const predictions = userHabits.map((habit) => {
+  type Prediction = {
+    habit: string;
+    risk: "low" | "medium" | "high";
+    score: number;
+    recommendation: string;
+  };
+
+  const predictions: Prediction[] = userHabits.map((habit) => {
     const streak = userStreaks.find((s) => s.habitId === habit.id);
+
+    const current = streak?.currentStreak ?? 0;
+
+    let risk: "low" | "medium" | "high";
+    let score: number;
+
+    if (current >= 14) {
+      risk = "low";
+      score = 20;
+    } else if (current >= 5) {
+      risk = "medium";
+      score = 55;
+    } else {
+      risk = "high";
+      score = 85;
+    }
 
     return {
       habit: habit.title,
-      risk:
-        (streak?.currentStreak ?? 0) >= 14
-          ? "low"
-          : (streak?.currentStreak ?? 0) >= 5
-            ? "medium"
-            : "high",
-
-      score:
-        (streak?.currentStreak ?? 0) >= 14
-          ? 20
-          : (streak?.currentStreak ?? 0) >= 5
-            ? 55
-            : 85,
-
-      recommendation: "Stay consistent and complete today's habit.",
+      risk,
+      score,
+      recommendation:
+        current >= 14
+          ? "Excellent consistency. Keep protecting this streak."
+          : current >= 5
+            ? "Good progress. Stay consistent to strengthen this habit."
+            : "Complete this habit today to build momentum.",
     };
   });
 
@@ -147,9 +181,9 @@ export default async function DashboardPage() {
         <WeeklySummary
           title={report.title}
           summary={report.summary}
-          completionRate={completionRate}
+          completionRate={report.completionRate}
           bestStreak={currentStreak}
-          recommendations={report.recommendations ?? []}
+          recommendations={report.recommendations}
         />
       )}
 
@@ -162,14 +196,18 @@ export default async function DashboardPage() {
       <div className="grid gap-6 xl:grid-cols-2">
         <AIInsightCard
           title="AI Insight"
-          summary="You're maintaining excellent consistency. Completing your habits before noon has significantly improved your streak."
-          confidence={94}
+          summary={
+            "You're maintaining excellent consistency. Keep building your daily habits."
+          }
+          confidence={95}
           createdAt={new Date()}
         />
 
         <MotivationCard
           title="Today's Motivation"
-          message="Small actions repeated every day create extraordinary results. Keep your streak alive!"
+          message={
+            "Small actions repeated every day create extraordinary results. Keep your streak alive!"
+          }
           streak={currentStreak}
           completedToday={completedToday}
           goalToday={totalHabits}

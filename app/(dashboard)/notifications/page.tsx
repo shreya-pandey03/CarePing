@@ -3,9 +3,7 @@ import { desc, eq } from "drizzle-orm";
 
 import { auth } from "@/auth";
 import { db } from "@/drizzle";
-
 import { notifications } from "@/drizzle/schema";
-
 import {
   Card,
   CardContent,
@@ -13,9 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
 import { Badge } from "@/components/ui/badge";
-
 import { Bell, Calendar, CheckCircle2 } from "lucide-react";
 
 export default async function NotificationsPage() {

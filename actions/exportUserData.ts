@@ -4,13 +4,12 @@ import { eq } from "drizzle-orm";
 
 import { auth } from "@/auth";
 import { db } from "@/drizzle";
-
 import {
   users,
   habits,
   habitLogs,
   streaks,
-  insights,
+  aiInsights,
   recommendations,
   weeklyReports,
   monthlyReports,
@@ -53,8 +52,8 @@ export async function exportUserData() {
       where: eq(streaks.userId, userId),
     }),
 
-    db.query.insights.findMany({
-      where: eq(insights.userId, userId),
+    db.query.aiInsights.findMany({
+      where: eq(aiInsights.userId, userId),
     }),
 
     db.query.recommendations.findMany({

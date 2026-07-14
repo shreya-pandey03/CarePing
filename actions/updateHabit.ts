@@ -13,15 +13,26 @@ const updateHabitSchema = z.object({
 
   title: z.string().min(3).max(100),
 
-  description: z.string().optional(),
+  description: z.string().optional().nullable(),
 
-  category: z.string(),
+  category: z.enum([
+    "custom",
+    "health",
+    "fitness",
+    "reading",
+    "learning",
+    "coding",
+    "career",
+    "finance",
+    "mindfulness",
+    "nutrition",
+  ]),
 
   frequency: z.enum(["daily", "weekly", "monthly"]),
 
   targetDays: z.number().min(1).max(7),
 
-  reminderTime: z.string().optional(),
+  reminderTime: z.string().optional().nullable(),
 
   active: z.boolean(),
 });
@@ -39,7 +50,11 @@ export async function updateHabit(input: UpdateHabitInput) {
 
   try {
     const existingHabit = await db.query.habits.findFirst({
-      where: and(eq(habits.id, data.id), eq(habits.userId, session.user.id)),
+      where: and(
+        eq(habits.id, data.id),
+
+        eq(habits.userId, session.user.id),
+      ),
     });
 
     if (!existingHabit) {
@@ -53,22 +68,38 @@ export async function updateHabit(input: UpdateHabitInput) {
       .update(habits)
       .set({
         title: data.title,
+
         description: data.description ?? null,
+
         category: data.category,
+
         frequency: data.frequency,
+
         targetDays: data.targetDays,
-        reminderTime: data.reminderTime || null,
+
+        reminderTime: data.reminderTime ?? null,
+
         active: data.active,
+
         updatedAt: new Date(),
       })
-      .where(and(eq(habits.id, data.id), eq(habits.userId, session.user.id)));
+      .where(
+        and(
+          eq(habits.id, data.id),
+
+          eq(habits.userId, session.user.id),
+        ),
+      );
 
     revalidatePath("/dashboard");
+
     revalidatePath("/habits");
+
     revalidatePath(`/habits/${data.id}`);
 
     return {
       success: true,
+
       message: "Habit updated successfully.",
     };
   } catch (error) {
@@ -76,6 +107,7 @@ export async function updateHabit(input: UpdateHabitInput) {
 
     return {
       success: false,
+
       message: "Failed to update habit.",
     };
   }

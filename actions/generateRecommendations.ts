@@ -40,6 +40,7 @@ export async function generateRecommendations(
     habits: validated.habits,
     logs: validated.logs,
     streaks: validated.streaks,
+    goals: [],
   });
 
   const response = await generateAIRecommendations(prompt);

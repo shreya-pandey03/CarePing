@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
-import { desc, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+
 import { auth } from "@/auth";
 import { db } from "@/drizzle";
+
 import {
-  insights,
+  aiInsights,
   recommendations,
   weeklyReports,
   monthlyReports,
@@ -25,28 +27,31 @@ export default async function AIPage() {
 
   const userId = session.user.id;
 
-  // -----------------------
   // Load AI Data
-  // -----------------------
 
-  const latestInsight = await db.query.insights.findFirst({
-    where: eq(insights.userId, userId),
+  const latestInsight = await db.query.aiInsights.findFirst({
+    where: eq(aiInsights.userId, userId),
+
     orderBy: (table, { desc }) => [desc(table.createdAt)],
   });
 
   const latestWeeklyReport = await db.query.weeklyReports.findFirst({
     where: eq(weeklyReports.userId, userId),
-    orderBy: (table, { desc }) => [desc(table.createdAt)],
+
+    orderBy: (table, { desc }) => [desc(table.generatedAt)],
   });
 
   const latestMonthlyReport = await db.query.monthlyReports.findFirst({
     where: eq(monthlyReports.userId, userId),
+
     orderBy: (table, { desc }) => [desc(table.generatedAt)],
   });
 
   const aiRecommendations = await db.query.recommendations.findMany({
     where: eq(recommendations.userId, userId),
+
     orderBy: (table, { desc }) => [desc(table.createdAt)],
+
     limit: 5,
   });
 
@@ -58,9 +63,7 @@ export default async function AIPage() {
     where: eq(streaks.userId, userId),
   });
 
-  // -----------------------
   // Prediction Data
-  // -----------------------
 
   const predictions = userHabits.map((habit) => {
     const streak = userStreaks.find((s) => s.habitId === habit.id);
@@ -69,6 +72,7 @@ export default async function AIPage() {
 
     return {
       habit: habit.title,
+
       risk: current >= 14 ? "low" : current >= 5 ? "medium" : "high",
 
       score: current >= 14 ? 20 : current >= 5 ? 55 : 85,
@@ -78,7 +82,7 @@ export default async function AIPage() {
   });
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 p-6">
       <div>
         <h1 className="text-3xl font-bold">AI Coach</h1>
 
@@ -92,7 +96,7 @@ export default async function AIPage() {
         <AIInsightCard
           title={latestInsight.title}
           summary={latestInsight.summary}
-          confidence={latestInsight.confidence ?? 95}
+          confidence={95}
           createdAt={latestInsight.createdAt}
         />
       )}
@@ -100,7 +104,7 @@ export default async function AIPage() {
       {latestWeeklyReport && (
         <WeeklyCoachReport
           week={`${latestWeeklyReport.weekStart.toLocaleDateString()} - ${latestWeeklyReport.weekEnd.toLocaleDateString()}`}
-          score={latestWeeklyReport.score ?? 88}
+          score={latestWeeklyReport.completionRate}
           summary={latestWeeklyReport.summary}
           strengths={latestWeeklyReport.strengths}
           improvements={latestWeeklyReport.improvements}
@@ -116,13 +120,15 @@ export default async function AIPage() {
           completionRate={latestMonthlyReport.completionRate}
           longestStreak={Math.max(
             ...userStreaks.map((s) => s.longestStreak),
+
             0,
           )}
           achievements={[
             `Completed ${latestMonthlyReport.completedHabits} habits this month`,
+
             `Tracked ${latestMonthlyReport.totalHabits} habits`,
           ]}
-          recommendations={aiRecommendations.map((r) => r.recommendation)}
+          recommendations={aiRecommendations.map((r) => r.description)}
         />
       )}
 
@@ -131,7 +137,11 @@ export default async function AIPage() {
       <MotivationCard
         title="Today's Motivation"
         message="Success comes from small consistent actions. Every completed habit is another step toward your long-term goals."
-        streak={Math.max(...userStreaks.map((s) => s.currentStreak), 0)}
+        streak={Math.max(
+          ...userStreaks.map((s) => s.currentStreak),
+
+          0,
+        )}
         completedToday={0}
         goalToday={userHabits.length}
       />

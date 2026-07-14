@@ -6,9 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { auth } from "@/auth";
 import { db } from "@/drizzle";
 import { habits } from "@/drizzle/schema";
-
 import HabitForm from "@/components/habits/HabitForm";
-
 import { Button } from "@/components/ui/button";
 
 interface PageProps {
@@ -37,12 +35,12 @@ export default async function EditHabitPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="flex items-center justify-between">
-        <Button variant="outline" asChild>
-          <Link href={`/habits/${habit.id}`}>
+        <Link href={`/habits/${habit.id}`}>
+          <Button variant="ghost">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
-          </Link>
-        </Button>
+          </Button>
+        </Link>
       </div>
 
       <div>
@@ -54,13 +52,15 @@ export default async function EditHabitPage({ params }: PageProps) {
       </div>
 
       <HabitForm
-        initialData={{
-          id: habit.id,
+        habitId={habit.id}
+        defaultValues={{
           title: habit.title,
           description: habit.description ?? "",
           category: habit.category,
           frequency: habit.frequency,
           targetDays: habit.targetDays,
+          reminderTime: habit.reminderTime ?? "",
+          active: habit.active,
         }}
       />
     </div>
