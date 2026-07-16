@@ -1,7 +1,7 @@
 import { Worker, Job } from "bullmq";
 import { eq } from "drizzle-orm";
 import { connection } from "@/lib/bullmq";
-import { db } from "@/drizzle";
+import { db } from "@/lib/db";
 import { habits, habitLogs, streaks, aiInsights } from "@/drizzle/schema";
 import { generateAIInsights } from "@/actions/generateAIInsights";
 

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 
 import { auth } from "@/auth";
-import { db } from "@/drizzle";
+import { db } from "@/lib/db";
 import { weeklyReports } from "@/drizzle/schema";
 import WeeklyCoachReport from "@/components/ai/WeeklyCoachReport";
 

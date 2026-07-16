@@ -4,7 +4,7 @@ import { and, eq, gte, lte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/auth";
-import { db } from "@/drizzle";
+import { db } from "@/lib/db";
 import { habits, habitLogs, streaks } from "@/drizzle/schema";
 import { calculateStreaks } from "@/lib/streakCalculator";
 import { redis } from "@/lib/redis";

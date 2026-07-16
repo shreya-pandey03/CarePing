@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { desc, eq } from "drizzle-orm";
 
 import { auth } from "@/auth";
-import { db } from "@/drizzle";
+import { db } from "@/lib/db";
 import { notifications } from "@/drizzle/schema";
 import {
   Card,

@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { eq, desc } from "drizzle-orm";
 
-import { db } from "@/drizzle";
+import { db } from "@/lib/db";
 
 import {
   habits,

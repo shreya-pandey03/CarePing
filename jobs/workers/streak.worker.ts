@@ -1,7 +1,7 @@
 import { Worker, Job } from "bullmq";
 import { eq } from "drizzle-orm";
 import { connection } from "@/lib/bullmq";
-import { db } from "@/drizzle";
+import { db } from "@/lib/db";
 import { habitLogs, streaks } from "@/drizzle/schema";
 import { calculateStreaks } from "@/lib/streakCalculator";
 import { asc } from "drizzle-orm";

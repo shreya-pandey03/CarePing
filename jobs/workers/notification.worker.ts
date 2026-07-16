@@ -2,7 +2,7 @@ import { Worker, Job } from "bullmq";
 import { and, eq } from "drizzle-orm";
 
 import { connection } from "@/lib/bullmq";
-import { db } from "@/drizzle";
+import { db } from "@/lib/db";
 
 import { habits, habitLogs, notifications } from "@/drizzle/schema";
 

@@ -1,5 +1,5 @@
 
-import { db } from "@/drizzle";
+import { db } from "@/lib/db";
 import { habits } from "@/drizzle/schema";
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";

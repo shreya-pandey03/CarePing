@@ -2,9 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { Plus } from "lucide-react";
+
 import { auth } from "@/auth";
-import { db } from "@/drizzle";
-import { habits, streaks } from "@/drizzle/schema";
+import { db } from "@/lib/db";
+import { habits, habitLogs, streaks } from "@/drizzle/schema";
+
 import HabitCard from "@/components/habits/HabitCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,10 +22,11 @@ export default async function HabitsPage() {
 
   const userHabits = await db.query.habits.findMany({
     where: eq(habits.userId, userId),
-    with: {
-      logs: true,
-    },
     orderBy: (habits, { desc }) => [desc(habits.createdAt)],
+  });
+
+  const logs = await db.query.habitLogs.findMany({
+    where: eq(habitLogs.userId, userId),
   });
 
   const userStreaks = await db.query.streaks.findMany({
@@ -41,7 +44,7 @@ export default async function HabitsPage() {
           </p>
         </div>
 
-        <Button asChild>
+        <Button>
           <Link href="/habits/new">
             <Plus className="mr-2 h-4 w-4" />
             New Habit
@@ -58,7 +61,7 @@ export default async function HabitsPage() {
               Create your first habit to begin tracking your progress.
             </p>
 
-            <Button asChild className="mt-6">
+            <Button className="mt-6">
               <Link href="/habits/new">Create Habit</Link>
             </Button>
           </CardContent>
@@ -66,9 +69,13 @@ export default async function HabitsPage() {
       ) : (
         <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
           {userHabits.map((habit) => {
+            const habitLogsForHabit = logs.filter(
+              (log) => log.habitId === habit.id,
+            );
+
             const streak = userStreaks.find((s) => s.habitId === habit.id);
 
-            const completedToday = habit.logs.some((log) => {
+            const completedToday = habitLogsForHabit.some((log) => {
               const today = new Date();
 
               return log.completedAt.toDateString() === today.toDateString();
@@ -77,9 +84,17 @@ export default async function HabitsPage() {
             return (
               <HabitCard
                 key={habit.id}
-                habit={habit}
+                id={habit.id}
+                title={habit.title}
+                description={habit.description ?? undefined}
+                category={habit.category}
+                frequency={habit.frequency}
                 streak={streak?.currentStreak ?? 0}
-                completedToday={completedToday}
+                completion={completedToday ? 100 : 0}
+                reminderTime={habit.reminderTime ?? undefined}
+                active={habit.active}
+                onComplete={() => {}}
+                onDelete={() => {}}
               />
             );
           })}

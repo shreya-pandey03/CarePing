@@ -187,7 +187,6 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   emailVerified: timestamp("email_verified"),
   image: text("image"),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const notifications = pgTable(

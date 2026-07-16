@@ -4,7 +4,7 @@ import { and, eq, desc } from "drizzle-orm";
 import { Pencil, ArrowLeft } from "lucide-react";
 
 import { auth } from "@/auth";
-import { db } from "@/drizzle";
+import { db } from "@/lib/db";
 
 import { habits, habitLogs, streaks } from "@/drizzle/schema";
 

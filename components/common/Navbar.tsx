@@ -1,14 +1,11 @@
 "use client";
 
-import { Menu, Bell, LogOut } from "lucide-react";
+import { Bell, LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
-
 import { Button } from "@/components/ui/button";
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import ThemeToggle from "./ThemeToggle";
 
 interface NavbarProps {
   user: {
@@ -27,17 +25,18 @@ interface NavbarProps {
 
 export default function Navbar({ user }: NavbarProps) {
   return (
-    <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b bg-background px-6">
+    <header className="flex h-16 items-center justify-between border-b bg-background px-6">
       {/* Left */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         <SidebarTrigger />
 
         <div>
           <h1 className="text-xl font-semibold">Dashboard</h1>
-
           <p className="text-sm text-muted-foreground">Welcome back 👋</p>
         </div>
       </div>
+
+      <ThemeToggle />
 
       {/* Right */}
       <div className="flex items-center gap-3">
@@ -46,20 +45,16 @@ export default function Navbar({ user }: NavbarProps) {
         </Button>
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-auto p-1">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={user.image ?? ""} alt={user.name ?? ""} />
-
-                <AvatarFallback>{user.name?.charAt(0) ?? "U"}</AvatarFallback>
-              </Avatar>
-            </Button>
+          <DropdownMenuTrigger className="rounded-md p-1 hover:bg-accent">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={user.image ?? ""} />
+              <AvatarFallback>{user.name?.charAt(0) ?? "U"}</AvatarFallback>
+            </Avatar>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="w-56">
             <div className="px-2 py-2">
               <p className="font-medium">{user.name}</p>
-
               <p className="text-sm text-muted-foreground">{user.email}</p>
             </div>
 

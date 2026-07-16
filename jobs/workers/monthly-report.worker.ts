@@ -1,7 +1,7 @@
 import { Worker, Job } from "bullmq";
 import { and, eq, gte, lte } from "drizzle-orm";
 import { connection } from "@/lib/bullmq";
-import { db } from "@/drizzle";
+import { db } from "@/lib/db";
 import { habits, habitLogs, monthlyReports, streaks } from "@/drizzle/schema";
 import { generateWeeklyReport } from "@/actions/generateWeeklyReport";
 

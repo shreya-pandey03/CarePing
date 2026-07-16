@@ -55,7 +55,7 @@ export default function AIInsightCard({
           <Badge variant="secondary">{confidence}%</Badge>
         </div>
 
-        <p className="text-xs text-muted-foreground">
+        <p suppressHydrationWarning>
           Generated on {createdAt.toLocaleDateString()} at{" "}
           {createdAt.toLocaleTimeString()}
         </p>

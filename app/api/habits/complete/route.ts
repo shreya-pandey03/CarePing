@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { nanoid } from "nanoid";
 import { updateStreaks } from "@/actions/updateStreaks";
-import { db } from "@/drizzle";
+import { db } from "@/lib/db";
 import { habitLogs } from "@/drizzle/schema";
 
 export async function POST(req: Request) {

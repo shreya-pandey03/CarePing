@@ -3,7 +3,7 @@
 import { eq } from "drizzle-orm";
 
 import { auth } from "@/auth";
-import { db } from "@/drizzle";
+import { db } from "@/lib/db";
 import { redis } from "@/lib/redis";
 
 import { generateInsight } from "@/lib/gemini";

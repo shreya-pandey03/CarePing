@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
-import { db } from "@/drizzle";
+import { db } from "@/lib/db";
 import { habits, habitLogs, streaks } from "@/drizzle/schema";
 import { calculateCompletionRate, calculateConsistency } from "@/lib/analytics";
 import CompletionChart from "@/components/analytics/CompletionChart";

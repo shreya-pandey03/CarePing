@@ -1,4 +1,4 @@
-import { db } from "@/drizzle";
+import { db } from "@/lib/db";
 import { notifications, notificationCategory } from "@/drizzle/schema";
 
 export type NotificationCategory =

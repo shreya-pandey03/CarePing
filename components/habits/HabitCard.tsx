@@ -123,7 +123,7 @@ export default function HabitCard({
           Complete
         </Button>
 
-        <Button asChild variant="outline">
+        <Button  variant="outline">
           <Link href={`/habits/${id}`}>
             <Pencil className="mr-2 h-4 w-4" />
             Edit

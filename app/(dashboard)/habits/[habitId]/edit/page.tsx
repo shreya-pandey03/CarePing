@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { ArrowLeft } from "lucide-react";
 
 import { auth } from "@/auth";
-import { db } from "@/drizzle";
+import { db } from "@/lib/db";
 import { habits } from "@/drizzle/schema";
 import HabitForm from "@/components/habits/HabitForm";
 import { Button } from "@/components/ui/button";

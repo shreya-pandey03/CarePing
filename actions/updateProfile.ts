@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth";
-import { db } from "@/drizzle";
+import { db } from "@/lib/db";
 import { users } from "@/drizzle/schema";
 
 const updateProfileSchema = z.object({
@@ -37,8 +37,6 @@ export async function updateProfile(input: UpdateProfileInput) {
         name: data.name,
 
         image: data.image && data.image.length > 0 ? data.image : null,
-
-        updatedAt: new Date(),
       })
       .where(eq(users.id, session.user.id));
 

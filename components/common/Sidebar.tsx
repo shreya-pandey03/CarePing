@@ -86,10 +86,9 @@ export default function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="border-b">
-        <div className="px-3 py-4">
+      <SidebarHeader className="border-b p-6">
+        <div>
           <h2 className="text-xl font-bold">AI Habit Coach</h2>
-
           <p className="text-sm text-muted-foreground">Build Better Habits</p>
         </div>
       </SidebarHeader>
@@ -100,18 +99,16 @@ export default function AppSidebar() {
             <SidebarMenu>
               {items.map((item) => {
                 const Icon = item.icon;
-
                 const active = pathname === item.url;
 
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={active}>
-                      <Link href={item.url}>
+                    <Link href={item.url}>
+                      <SidebarMenuButton isActive={active}>
                         <Icon className="h-5 w-5" />
-
                         <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
+                      </SidebarMenuButton>
+                    </Link>
                   </SidebarMenuItem>
                 );
               })}
