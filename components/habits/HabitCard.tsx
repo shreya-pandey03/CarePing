@@ -40,10 +40,6 @@ export interface HabitCardProps {
   reminderTime?: string;
 
   active: boolean;
-
-  onComplete: (id: string) => void;
-
-  onDelete: (id: string) => void;
 }
 
 export default function HabitCard({
@@ -56,8 +52,6 @@ export default function HabitCard({
   completion,
   reminderTime,
   active,
-  onComplete,
-  onDelete,
 }: HabitCardProps) {
   return (
     <Card className={!active ? "opacity-60" : ""}>
@@ -118,19 +112,19 @@ export default function HabitCard({
       </CardContent>
 
       <CardFooter className="flex flex-wrap gap-2">
-        <Button onClick={() => onComplete(id)} className="flex-1">
+        <Button className="flex-1">
           <CheckCircle2 className="mr-2 h-4 w-4" />
           Complete
         </Button>
 
-        <Button  variant="outline">
+        <Button variant="outline">
           <Link href={`/habits/${id}`}>
             <Pencil className="mr-2 h-4 w-4" />
             Edit
           </Link>
         </Button>
 
-        <Button variant="destructive" onClick={() => onDelete(id)}>
+        <Button variant="destructive">
           <Trash2 className="mr-2 h-4 w-4" />
           Delete
         </Button>

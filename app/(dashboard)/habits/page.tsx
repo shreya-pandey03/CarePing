@@ -93,8 +93,6 @@ export default async function HabitsPage() {
                 completion={completedToday ? 100 : 0}
                 reminderTime={habit.reminderTime ?? undefined}
                 active={habit.active}
-                onComplete={() => {}}
-                onDelete={() => {}}
               />
             );
           })}

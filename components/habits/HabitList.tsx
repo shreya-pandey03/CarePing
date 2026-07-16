@@ -35,7 +35,7 @@ export default function HabitList({
             time.
           </p>
 
-          <Button asChild className="mt-8">
+          <Button className="mt-8">
             <Link href="/habits/create">
               <Plus className="mr-2 h-4 w-4" />
               Create Habit
@@ -60,7 +60,7 @@ export default function HabitList({
           </p>
         </div>
 
-        <Button asChild>
+        <Button>
           <Link href="/habits/create">
             <Plus className="mr-2 h-4 w-4" />
             New Habit
@@ -75,8 +75,8 @@ export default function HabitList({
           <HabitCard
             key={habit.id}
             {...habit}
-            onComplete={onComplete}
-            onDelete={onDelete}
+            // onComplete={onComplete}
+            // onDelete={onDelete}
           />
         ))}
       </div>

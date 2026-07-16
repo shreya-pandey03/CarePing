@@ -55,19 +55,12 @@ export async function sendReminder(): Promise<ReminderResult> {
 
     await db.insert(notifications).values({
       id: crypto.randomUUID(),
-
       userId: habit.userId,
-
       title: "Habit Reminder",
-
       message: `Don't forget to complete "${habit.title}" today.`,
-
       category: "habit_reminder",
-
       isRead: false,
-
       actionUrl: `/habits/${habit.id}`,
-
       createdAt: now,
     });
 

@@ -5,16 +5,14 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { Button } from "@/components/ui/button";
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-import { Input } from "@/components/ui/input";
-
-import { Textarea } from "@/components/ui/textarea";
-
-import { Switch } from "@/components/ui/switch";
+import { createHabit } from "@/actions/createHabit";
 import { updateHabit } from "@/actions/updateHabit";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 
 import {
   Form,
@@ -33,11 +31,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+interface HabitFormProps {
+  habitId?: string;
+  defaultValues?: HabitFormValues;
+}
+
 const formSchema = z.object({
   title: z.string().min(3),
-
   description: z.string().optional(),
-
   category: z.enum([
     "custom",
     "health",
@@ -50,56 +51,45 @@ const formSchema = z.object({
     "mindfulness",
     "nutrition",
   ]),
-
   frequency: z.enum(["daily", "weekly", "monthly"]),
-
-  targetDays: z.coerce.number().min(1).max(7),
-
+  targetDays: z.number().min(1).max(7),
   reminderTime: z.string().optional(),
-
   active: z.boolean(),
 });
 
 type HabitFormValues = z.infer<typeof formSchema>;
 
-interface HabitFormProps {
-  habitId: string;
-  defaultValues?: HabitFormValues;
-}
-
-export default function HabitForm({ defaultValues, habitId }: HabitFormProps) {
+export default function HabitForm({ habitId, defaultValues }: HabitFormProps) {
   const [pending, startTransition] = useTransition();
 
   const form = useForm<HabitFormValues>({
     resolver: zodResolver(formSchema),
-
     defaultValues: defaultValues ?? {
       title: "",
-
       description: "",
-
       category: "health",
-
       frequency: "daily",
-
       targetDays: 1,
-
       reminderTime: "",
-
       active: true,
     },
   });
 
   async function submit(values: HabitFormValues) {
     startTransition(async () => {
-      const result = await updateHabit({
-        id: habitId,
-        ...values,
-      });
+      const result = habitId
+        ? await updateHabit({
+            id: habitId,
+            ...values,
+          })
+        : await createHabit(values);
 
       if (!result.success) {
         console.error(result.message);
+        return;
       }
+
+      form.reset();
     });
   }
 
@@ -118,11 +108,9 @@ export default function HabitForm({ defaultValues, habitId }: HabitFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Habit Name</FormLabel>
-
                   <FormControl>
                     <Input placeholder="Morning Exercise" {...field} />
                   </FormControl>
-
                   <FormMessage />
                 </FormItem>
               )}
@@ -134,7 +122,6 @@ export default function HabitForm({ defaultValues, habitId }: HabitFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Description</FormLabel>
-
                   <FormControl>
                     <Textarea
                       rows={4}
@@ -160,23 +147,20 @@ export default function HabitForm({ defaultValues, habitId }: HabitFormProps) {
                       </SelectTrigger>
 
                       <SelectContent>
+                        <SelectItem value="custom">Custom</SelectItem>
                         <SelectItem value="health">Health</SelectItem>
-
                         <SelectItem value="fitness">Fitness</SelectItem>
-
-                        <SelectItem value="learning">Learning</SelectItem>
-
                         <SelectItem value="reading">Reading</SelectItem>
-
+                        <SelectItem value="learning">Learning</SelectItem>
                         <SelectItem value="coding">Coding</SelectItem>
-
                         <SelectItem value="career">Career</SelectItem>
-
                         <SelectItem value="finance">Finance</SelectItem>
-
                         <SelectItem value="mindfulness">Mindfulness</SelectItem>
+                        <SelectItem value="nutrition">Nutrition</SelectItem>
                       </SelectContent>
                     </Select>
+
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -195,12 +179,12 @@ export default function HabitForm({ defaultValues, habitId }: HabitFormProps) {
 
                       <SelectContent>
                         <SelectItem value="daily">Daily</SelectItem>
-
                         <SelectItem value="weekly">Weekly</SelectItem>
-
                         <SelectItem value="monthly">Monthly</SelectItem>
                       </SelectContent>
                     </Select>
+
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -215,8 +199,19 @@ export default function HabitForm({ defaultValues, habitId }: HabitFormProps) {
                     <FormLabel>Target Days</FormLabel>
 
                     <FormControl>
-                      <Input type="number" min={1} max={7} {...field} />
+                      <Input
+                        type="number"
+                        min={1}
+                        max={7}
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
                     </FormControl>
+
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -226,11 +221,13 @@ export default function HabitForm({ defaultValues, habitId }: HabitFormProps) {
                 name="reminderTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Reminder</FormLabel>
+                    <FormLabel>Reminder Time</FormLabel>
 
                     <FormControl>
                       <Input type="time" {...field} />
                     </FormControl>
+
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -260,7 +257,13 @@ export default function HabitForm({ defaultValues, habitId }: HabitFormProps) {
             />
 
             <Button type="submit" disabled={pending} className="w-full">
-              {pending ? "Saving..." : "Save Habit"}
+              {pending
+                ? habitId
+                  ? "Updating..."
+                  : "Creating..."
+                : habitId
+                  ? "Update Habit"
+                  : "Create Habit"}
             </Button>
           </form>
         </Form>

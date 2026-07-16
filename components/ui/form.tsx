@@ -13,8 +13,8 @@ import {
 export const Form = FormProvider;
 
 export function FormField<
-  TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+  TFieldValues extends FieldValues,
+  TName extends FieldPath<TFieldValues>,
 >(props: ControllerProps<TFieldValues, TName>) {
   return <Controller {...props} />;
 }
@@ -50,13 +50,9 @@ export function FormMessage() {
     formState: { errors },
   } = useFormContext();
 
-  const error = Object.values(errors)[0];
+  const error = Object.values(errors)[0] as { message?: string } | undefined;
 
-  if (!error) return null;
+  if (!error?.message) return null;
 
-  return (
-    <p className="text-sm font-medium text-destructive">
-      {String(error.message)}
-    </p>
-  );
+  return <p className="text-sm font-medium text-red-500">{error.message}</p>;
 }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { and, eq, desc } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { Pencil, ArrowLeft } from "lucide-react";
 
 import { auth } from "@/auth";
@@ -15,9 +15,9 @@ import HabitProgress from "@/components/habits/HabitProgress";
 import { Button } from "@/components/ui/button";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     habitId: string;
-  };
+  }>;
 }
 
 export default async function HabitDetailsPage({ params }: PageProps) {
@@ -27,18 +27,12 @@ export default async function HabitDetailsPage({ params }: PageProps) {
     redirect("/login");
   }
 
+  const { habitId } = await params;
   const userId = session.user.id;
 
-  const habitId = params.habitId;
-
   // Get Habit
-
   const habit = await db.query.habits.findFirst({
-    where: and(
-      eq(habits.id, habitId),
-
-      eq(habits.userId, userId),
-    ),
+    where: and(eq(habits.id, habitId), eq(habits.userId, userId)),
   });
 
   if (!habit) {
@@ -46,15 +40,12 @@ export default async function HabitDetailsPage({ params }: PageProps) {
   }
 
   // Get Habit Logs
-
   const logs = await db.query.habitLogs.findMany({
     where: eq(habitLogs.habitId, habitId),
-
     orderBy: (logs, { desc }) => [desc(logs.completedAt)],
   });
 
   // Get Streak
-
   const streak = await db.query.streaks.findFirst({
     where: eq(streaks.habitId, habitId),
   });
@@ -69,6 +60,7 @@ export default async function HabitDetailsPage({ params }: PageProps) {
     logs.length === 0 ? 0 : Math.min((logs.length / 30) * 100, 100);
 
   const today = new Date();
+
   const daysInMonth = new Date(
     today.getFullYear(),
     today.getMonth() + 1,
@@ -103,7 +95,7 @@ export default async function HabitDetailsPage({ params }: PageProps) {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <Link href="/habits">
-          <Button variant="ghost">
+          <Button variant="outline">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
@@ -127,8 +119,6 @@ export default async function HabitDetailsPage({ params }: PageProps) {
         completion={progress}
         reminderTime={habit.reminderTime ?? undefined}
         active={habit.active}
-        onComplete={() => {}}
-        onDelete={() => {}}
       />
 
       <HabitProgress
