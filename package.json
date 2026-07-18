@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "worker:streak": "bun jobs/workers/streak.worker.ts",
-    "worker": "bun jobs/workers/index.ts"
+    "worker": "bun jobs/workers/index.ts",
+    "socket": "bun socket/server.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.2",

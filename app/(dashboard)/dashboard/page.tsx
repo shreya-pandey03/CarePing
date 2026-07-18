@@ -23,6 +23,7 @@ import MotivationCard from "@/components/ai/MotivationCard";
 import StreakPrediction from "@/components/ai/StreakPrediction";
 
 import { calculateCompletionRate, calculateConsistency } from "@/lib/analytics";
+import DashboardRealtime from "@/components/dashboard/DashboardRealtime";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -215,6 +216,7 @@ export default async function DashboardPage() {
       </div>
 
       <StreakPrediction predictions={predictions} />
+      <DashboardRealtime userId={session.user.id} />
     </div>
   );
 }

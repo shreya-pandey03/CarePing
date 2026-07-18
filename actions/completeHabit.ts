@@ -1,181 +1,109 @@
 "use server";
 
-import { and, eq, gte, lte } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
+
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { habits, habitLogs, streaks } from "@/drizzle/schema";
-import { calculateStreaks } from "@/lib/streakCalculator";
+
+import { habitLogs, habits } from "@/drizzle/schema";
+
+
 import { redis } from "@/lib/redis";
-import {
-  aiQueue,
-  notificationQueue,
-  recommendationQueue,
-  streakQueue,
-  weeklyReportQueue,
-} from "@/jobs/queues";
+import { emitHabitCompleted } from "@/lib/socket/emitters";
 
-const completeHabitSchema = z.object({
-  habitId: z.string().uuid(),
-});
+export async function completeHabit(habitId: string) {
+  const session = await auth();
 
-export type CompleteHabitInput = z.infer<typeof completeHabitSchema>;
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
 
-export async function completeHabit(input: CompleteHabitInput) {
+  const userId = session.user.id;
+
   try {
-    // Authenticate User
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      throw new Error("Unauthorized");
-    }
-
-    // Validate Input
-    const { habitId } = completeHabitSchema.parse(input);
-
-    // Verify Habit Ownership
     const habit = await db.query.habits.findFirst({
-      where: and(eq(habits.id, habitId), eq(habits.userId, session.user.id)),
+      where: and(
+        eq(habits.id, habitId),
+
+        eq(habits.userId, userId),
+      ),
     });
 
     if (!habit) {
       return {
         success: false,
-        message: "Habit not found.",
+
+        message: "Habit not found",
       };
     }
 
-    // Today's Date Range
     const today = new Date();
 
-    const startOfDay = new Date(today);
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const endOfDay = new Date(today);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    // Prevent Duplicate Completion
-    const existingLog = await db.query.habitLogs.findFirst({
+    const existing = await db.query.habitLogs.findFirst({
       where: and(
         eq(habitLogs.habitId, habitId),
-        gte(habitLogs.completedAt, startOfDay),
-        lte(habitLogs.completedAt, endOfDay),
+
+        eq(habitLogs.userId, userId),
       ),
     });
 
-    if (existingLog) {
+    if (existing) {
       return {
         success: false,
-        message: "Habit already completed today.",
+
+        message: "Already completed today",
       };
     }
 
-    // Database Transaction
-    await db.transaction(async (tx) => {
-      await tx.insert(habitLogs).values({
-        id: crypto.randomUUID(),
-        habitId,
-        userId: session.user.id,
-        completed: true,
-        completedAt: new Date(),
-      });
+    await db.insert(habitLogs).values({
+      id: crypto.randomUUID(),
 
-      const logs = await tx.query.habitLogs.findMany({
-        where: eq(habitLogs.habitId, habitId),
-        orderBy: (logs, { asc }) => [asc(logs.completedAt)],
-      });
+      habitId,
 
-      const { currentStreak, longestStreak } = calculateStreaks(logs);
+      userId,
 
-      const streak = await tx.query.streaks.findFirst({
-        where: eq(streaks.habitId, habitId),
-      });
-
-      if (streak) {
-        await tx
-          .update(streaks)
-          .set({
-            currentStreak,
-            longestStreak,
-            updatedAt: new Date(),
-          })
-          .where(eq(streaks.habitId, habitId));
-      } else {
-        await tx.insert(streaks).values({
-          id: crypto.randomUUID(),
-          userId: session.user.id,
-          habitId,
-          currentStreak,
-          longestStreak,
-          totalCompletions: logs.length,
-          lastCompletedAt: new Date(),
-          riskScore: 0,
-        });
-      }
-
-      await tx
-        .update(habits)
-        .set({
-          updatedAt: new Date(),
-        })
-        .where(eq(habits.id, habitId));
+      completedAt: today,
     });
 
-    // Clear Redis Cache
-    await Promise.all([
-      redis.del(`dashboard:${session.user.id}`),
-      redis.del(`analytics:${session.user.id}`),
-      redis.del(`habits:${session.user.id}`),
-      redis.del(`streaks:${session.user.id}`),
-    ]);
+    /*
+          Redis cache update
+        */
 
-    // Queue Background Jobs
-    try {
-      await Promise.all([
-        streakQueue.add("calculate-streak", {
-          userId: session.user.id,
-          habitId,
-        }),
+    const cacheKey = `dashboard:${userId}`;
 
-        aiQueue.add("generate-ai-insights", {
-          userId: session.user.id,
-          habitId,
-        }),
+    await redis.del(cacheKey);
 
-        recommendationQueue.add("generate-recommendations", {
-          userId: session.user.id,
-        }),
+    /*
+          Socket realtime event
+        */
 
-        weeklyReportQueue.add("refresh-weekly-report", {
-          userId: session.user.id,
-        }),
+    emitHabitCompleted(
+      userId,
 
-        notificationQueue.add("check-reminders", {
-          userId: session.user.id,
-        }),
-      ]);
-    } catch (queueError) {
-      console.error("Queue Error:", queueError);
-    }
+      {
+        habitId,
 
-    // Refresh Next.js Cache
+        completedAt: today.toISOString(),
+      },
+    );
+
     revalidatePath("/dashboard");
-    revalidatePath("/habits");
+
     revalidatePath(`/habits/${habitId}`);
-    revalidatePath("/analytics");
-    revalidatePath("/streaks");
 
     return {
       success: true,
-      message: "Habit completed successfully.",
+
+      message: "Habit completed",
     };
   } catch (error) {
-    console.error("Complete Habit Error:", error);
+    console.error("Complete Habit Error", error);
 
     return {
       success: false,
-      message: "Failed to complete habit.",
+
+      message: "Something went wrong",
     };
   }
 }
