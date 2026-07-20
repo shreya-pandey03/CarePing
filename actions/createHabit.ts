@@ -7,6 +7,10 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { habits } from "@/drizzle/schema";
 
+import { getSocketServer } from "@/socket/server";
+
+import { emitHabitCreated } from "@/lib/socket/emitters";
+
 const createHabitSchema = z.object({
   title: z.string().min(1),
 
@@ -46,8 +50,10 @@ export async function createHabit(input: CreateHabitInput) {
   const data = createHabitSchema.parse(input);
 
   try {
+    const habitId = crypto.randomUUID();
+
     await db.insert(habits).values({
-      id: crypto.randomUUID(),
+      id: habitId,
 
       userId: session.user.id,
 
@@ -66,6 +72,17 @@ export async function createHabit(input: CreateHabitInput) {
       active: data.active,
     });
 
+    const io = getSocketServer();
+
+    emitHabitCreated(io, session.user.id, {
+      id: habitId,
+      title: data.title,
+      category: data.category,
+      frequency: data.frequency,
+      targetDays: data.targetDays,
+      reminderTime: data.reminderTime,
+      active: data.active,
+    });
     revalidatePath("/dashboard");
     revalidatePath("/habits");
 

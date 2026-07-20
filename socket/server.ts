@@ -4,7 +4,6 @@ import { Server } from "socket.io";
 import { registerSocketHandlers } from "@/lib/socket/handlers";
 
 const PORT = Number(process.env.SOCKET_PORT ?? 3001);
-
 let io: Server | null = null;
 
 export function startSocketServer() {

@@ -8,8 +8,8 @@ import { db } from "@/lib/db";
 
 import { habitLogs, habits } from "@/drizzle/schema";
 
-
 import { redis } from "@/lib/redis";
+import { getSocketServer } from "@/socket/server";
 import { emitHabitCompleted } from "@/lib/socket/emitters";
 
 export async function completeHabit(habitId: string) {
@@ -66,27 +66,18 @@ export async function completeHabit(habitId: string) {
       completedAt: today,
     });
 
-    /*
-          Redis cache update
-        */
+    const io = getSocketServer();
+
+    emitHabitCompleted(io, session.user.id, {
+      habitId,
+      completedAt: new Date(),
+    });
+
+    /*Redis cache update*/
 
     const cacheKey = `dashboard:${userId}`;
 
     await redis.del(cacheKey);
-
-    /*
-          Socket realtime event
-        */
-
-    emitHabitCompleted(
-      userId,
-
-      {
-        habitId,
-
-        completedAt: today.toISOString(),
-      },
-    );
 
     revalidatePath("/dashboard");
 

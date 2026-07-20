@@ -11,7 +11,6 @@ export function emitToUser(
 ) {
   io.to(userRoom(userId)).emit(event, data);
 }
-
 export function emitHabitCreated(io: Server, userId: string, habit: unknown) {
   emitToUser(io, userId, SOCKET_EVENTS.HABIT_CREATED, habit);
 }

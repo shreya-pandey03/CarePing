@@ -5,6 +5,7 @@ import Navbar from "@/components/common/Navbar";
 import Sidebar from "@/components/common/Sidebar";
 import Footer from "@/components/common/Footer";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import DashboardRealtime from "@/components/dashboard/DashboardRealtime";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -24,7 +25,11 @@ export default async function DashboardLayout({
       <SidebarInset>
         <Navbar user={session.user} />
         <main className="flex-1 p-6">
-          <div className="mx-auto max-w-7xl">{children}</div>
+          <div className="mx-auto max-w-7xl">
+            <DashboardRealtime userId={session.user.id} />
+
+            {children}
+          </div>
         </main>
         <Footer />
       </SidebarInset>
