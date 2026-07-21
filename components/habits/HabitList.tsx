@@ -8,19 +8,24 @@ import HabitCard, { HabitCardProps } from "./HabitCard";
 import { Button } from "@/components/ui/button";
 
 import { Card, CardContent } from "@/components/ui/card";
+import RealtimeHabitList from "./RealtimeHabitList";
 
 interface HabitListProps {
-  habits: HabitCardProps[];
-
-  onComplete: (id: string) => void;
-
-  onDelete: (id: string) => void;
+  habits: Omit<HabitCardProps, "streak" | "completion">[];
+  streakMap: Record<
+    string,
+    {
+      currentStreak: number;
+      longestStreak: number;
+    }
+  >;
+  completionMap: Record<string, number>;
 }
 
 export default function HabitList({
   habits,
-  onComplete,
-  onDelete,
+   streakMap,
+  completionMap
 }: HabitListProps) {
   if (habits.length === 0) {
     return (
@@ -71,14 +76,15 @@ export default function HabitList({
       {/* Grid */}
 
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {habits.map((habit) => (
-          <HabitCard
-            key={habit.id}
-            {...habit}
-            // onComplete={onComplete}
-            // onDelete={onDelete}
-          />
-        ))}
+<RealtimeHabitList
+          habits={habits}
+          streaks={Object.fromEntries(
+            Object.entries(streakMap).map(([id, streak]) => [
+              id,
+              streak.currentStreak,
+            ])
+          )}
+          completion={completionMap} progress={undefined}/>
       </div>
     </div>
   );
