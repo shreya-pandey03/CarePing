@@ -11,7 +11,7 @@ export const SOCKET_EVENTS = {
   HABIT_DELETED: "habit-deleted",
   HABIT_COMPLETED: "habit-completed",
 
-  
+
   // Dashboard
   DASHBOARD_UPDATE: "dashboard-update",
 

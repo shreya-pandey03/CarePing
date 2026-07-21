@@ -24,22 +24,16 @@ import { Progress } from "@/components/ui/progress";
 
 export interface HabitCardProps {
   id: string;
-
   title: string;
-
   description?: string;
-
   category: string;
-
   frequency: "daily" | "weekly" | "monthly";
-
   streak: number;
-
   completion: number;
-
   reminderTime?: string;
-
   active: boolean;
+  onComplete?: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 export default function HabitCard({
@@ -48,10 +42,12 @@ export default function HabitCard({
   description,
   category,
   frequency,
-  streak,
-  completion,
   reminderTime,
   active,
+  streak,
+  completion,
+  onComplete,
+  onDelete,
 }: HabitCardProps) {
   return (
     <Card className={!active ? "opacity-60" : ""}>
@@ -112,7 +108,12 @@ export default function HabitCard({
       </CardContent>
 
       <CardFooter className="flex flex-wrap gap-2">
-        <Button className="flex-1">
+        <Button
+          onClick={() => {
+            console.log("Complete clicked", id);
+            onComplete?.(id);
+          }}
+        >
           <CheckCircle2 className="mr-2 h-4 w-4" />
           Complete
         </Button>
@@ -124,7 +125,13 @@ export default function HabitCard({
           </Link>
         </Button>
 
-        <Button variant="destructive">
+        <Button
+          variant="destructive"
+          onClick={() => {
+            console.log("Delete clicked", id);
+            onDelete?.(id);
+          }}
+        >
           <Trash2 className="mr-2 h-4 w-4" />
           Delete
         </Button>

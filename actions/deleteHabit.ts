@@ -12,11 +12,12 @@ import {
   weeklyReportQueue,
   monthlyReportQueue,
 } from "@/jobs/queues";
-import { getSocketServer } from "@/socket/server";
 import { emitHabitDeleted } from "@/lib/socket/emitters";
 
 export async function deleteHabit(habitId: string) {
   const session = await auth();
+
+  console.log("SERVER DELETE HABIT:", habitId);
 
   if (!session?.user?.id) {
     throw new Error("Unauthorized");
@@ -44,10 +45,6 @@ export async function deleteHabit(habitId: string) {
       // Delete habit
       await tx.delete(habits).where(eq(habits.id, habitId));
     });
-
-    const io = getSocketServer();
-
-    emitHabitDeleted(io, session.user.id, habitId);
 
     // Queue regeneration jobs
     try {

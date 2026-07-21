@@ -6,7 +6,7 @@ import { Plus } from "lucide-react";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { habits, habitLogs, streaks } from "@/drizzle/schema";
-
+import HabitsClient from "@/components/habits/HabitsClient";
 import HabitCard from "@/components/habits/HabitCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ export default async function HabitsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      {/* <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">My Habits</h1>
 
@@ -50,7 +50,7 @@ export default async function HabitsPage() {
             New Habit
           </Link>
         </Button>
-      </div>
+      </div> */}
 
       {userHabits.length === 0 ? (
         <Card>
@@ -67,36 +67,38 @@ export default async function HabitsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
-          {userHabits.map((habit) => {
-            const habitLogsForHabit = logs.filter(
-              (log) => log.habitId === habit.id,
-            );
-
-            const streak = userStreaks.find((s) => s.habitId === habit.id);
-
-            const completedToday = habitLogsForHabit.some((log) => {
-              const today = new Date();
-
-              return log.completedAt.toDateString() === today.toDateString();
-            });
-
-            return (
-              <HabitCard
-                key={habit.id}
-                id={habit.id}
-                title={habit.title}
-                description={habit.description ?? undefined}
-                category={habit.category}
-                frequency={habit.frequency}
-                streak={streak?.currentStreak ?? 0}
-                completion={completedToday ? 100 : 0}
-                reminderTime={habit.reminderTime ?? undefined}
-                active={habit.active}
-              />
-            );
-          })}
-        </div>
+        <HabitsClient
+          habits={userHabits.map((habit) => ({
+            id: habit.id,
+            title: habit.title,
+            description: habit.description ?? undefined,
+            category: habit.category,
+            frequency: habit.frequency,
+            reminderTime: habit.reminderTime ?? undefined,
+            active: habit.active,
+          }))}
+          streakMap={Object.fromEntries(
+            userStreaks.map((streak) => [
+              streak.habitId,
+              {
+                currentStreak: streak.currentStreak,
+                longestStreak: streak.longestStreak,
+              },
+            ]),
+          )}
+          completionMap={Object.fromEntries(
+            userHabits.map((habit) => [
+              habit.id,
+              logs.some(
+                (log) =>
+                  log.habitId === habit.id &&
+                  log.completedAt.toDateString() === new Date().toDateString(),
+              )
+                ? 100
+                : 0,
+            ]),
+          )}
+        />
       )}
     </div>
   );

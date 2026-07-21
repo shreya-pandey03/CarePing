@@ -7,7 +7,6 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { habits } from "@/drizzle/schema";
-import { getSocketServer } from "@/socket/server";
 import { emitHabitUpdated } from "@/lib/socket/emitters";
 
 const updateHabitSchema = z.object({
@@ -92,24 +91,8 @@ export async function updateHabit(input: UpdateHabitInput) {
           eq(habits.userId, session.user.id),
         ),
       );
-
-    const io = getSocketServer();
-
-    emitHabitUpdated(io, session.user.id, {
-      id: data.id,
-      title: data.title,
-      description: data.description,
-      category: data.category,
-      frequency: data.frequency,
-      targetDays: data.targetDays,
-      reminderTime: data.reminderTime,
-      active: data.active,
-    });
-
     revalidatePath("/dashboard");
-
     revalidatePath("/habits");
-
     revalidatePath(`/habits/${data.id}`);
 
     return {

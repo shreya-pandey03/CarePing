@@ -3,15 +3,15 @@
 import Link from "next/link";
 import { Plus, ClipboardList } from "lucide-react";
 
-import HabitCard, { HabitCardProps } from "./HabitCard";
-
 import { Button } from "@/components/ui/button";
-
 import { Card, CardContent } from "@/components/ui/card";
+
+import { HabitCardProps } from "./HabitCard";
 import RealtimeHabitList from "./RealtimeHabitList";
 
 interface HabitListProps {
   habits: Omit<HabitCardProps, "streak" | "completion">[];
+
   streakMap: Record<
     string,
     {
@@ -19,13 +19,20 @@ interface HabitListProps {
       longestStreak: number;
     }
   >;
+
   completionMap: Record<string, number>;
+
+  onComplete: (id: string) => void;
+
+  onDelete: (id: string) => void;
 }
 
 export default function HabitList({
   habits,
-   streakMap,
-  completionMap
+  streakMap,
+  completionMap,
+  onComplete,
+  onDelete,
 }: HabitListProps) {
   if (habits.length === 0) {
     return (
@@ -65,7 +72,7 @@ export default function HabitList({
           </p>
         </div>
 
-        <Button>
+        <Button >
           <Link href="/habits/create">
             <Plus className="mr-2 h-4 w-4" />
             New Habit
@@ -73,19 +80,20 @@ export default function HabitList({
         </Button>
       </div>
 
-      {/* Grid */}
+      {/* Habits */}
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-<RealtimeHabitList
-          habits={habits}
-          streaks={Object.fromEntries(
-            Object.entries(streakMap).map(([id, streak]) => [
-              id,
-              streak.currentStreak,
-            ])
-          )}
-          completion={completionMap} progress={undefined}/>
-      </div>
+      <RealtimeHabitList
+        habits={habits}
+        streaks={Object.fromEntries(
+          Object.entries(streakMap).map(([id, streak]) => [
+            id,
+            streak.currentStreak,
+          ]),
+        )}
+        progress={completionMap}
+        onComplete={onComplete}
+        onDelete={onDelete}
+      />
     </div>
   );
 }

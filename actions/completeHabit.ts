@@ -9,12 +9,15 @@ import { db } from "@/lib/db";
 import { habitLogs, habits } from "@/drizzle/schema";
 
 import { redis } from "@/lib/redis";
-import { getSocketServer } from "@/socket/server";
 import { emitHabitCompleted } from "@/lib/socket/emitters";
 
 export async function completeHabit(habitId: string) {
   const session = await auth();
 
+
+  console.log("SERVER COMPLETE HABIT:", habitId);
+
+  
   if (!session?.user?.id) {
     throw new Error("Unauthorized");
   }
@@ -64,13 +67,6 @@ export async function completeHabit(habitId: string) {
       userId,
 
       completedAt: today,
-    });
-
-    const io = getSocketServer();
-
-    emitHabitCompleted(io, session.user.id, {
-      habitId,
-      completedAt: new Date(),
     });
 
     /*Redis cache update*/

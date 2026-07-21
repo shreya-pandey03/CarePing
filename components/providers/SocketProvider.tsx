@@ -2,23 +2,41 @@
 
 import { createContext, useContext, useEffect } from "react";
 import type { Socket } from "socket.io-client";
-
+import { useSocketStore } from "@/store/socketStore";
 import { getSocket } from "@/lib/socket";
 
 const SocketContext = createContext<Socket | null>(null);
 
 export function SocketProvider({ children }: { children: React.ReactNode }) {
   const socket = getSocket();
+  const { setConnected, addHabit, updateHabit, deleteHabit, completeHabit } =
+    useSocketStore();
 
   useEffect(() => {
     socket.connect();
 
     socket.on("connect", () => {
-      console.log("Socket connected:", socket.id);
+      setConnected(true);
     });
 
     socket.on("disconnect", () => {
-      console.log("Socket disconnected");
+      setConnected(false);
+    });
+
+    socket.on("habit:created", (habit) => {
+      addHabit(habit);
+    });
+
+    socket.on("habit:updated", (habit) => {
+      updateHabit(habit);
+    });
+
+    socket.on("habit:deleted", ({ id }) => {
+      deleteHabit(id);
+    });
+
+    socket.on("habit:completed", (data) => {
+      completeHabit(data);
     });
 
     return () => {

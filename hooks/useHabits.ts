@@ -1,92 +1,121 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-import {
-  createHabit,
-  deleteHabit,
-  getHabits,
-  updateHabit,
-} from "@/actions/habits";
+import { createHabit } from "@/actions/createHabit";
+import { updateHabit } from "@/actions/updateHabit";
+import { deleteHabit } from "@/actions/deleteHabit";
 
-import type { Habit, HabitFormValues } from "@/types/habit";
+import type { HabitFormValues } from "@/types/habit";
+
+import { useSocketStore } from "@/store/socketStore";
+import { completeHabit as completeHabitAction } from "@/actions/completeHabit";
 
 export function useHabits() {
-  const [habits, setHabits] = useState<Habit[]>([]);
+  const habits = useSocketStore((state) => state.habits);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
 
-  async function fetchHabits() {
+  async function addHabit(values: HabitFormValues) {
     try {
       setLoading(true);
 
-      setError(null);
+      await createHabit(values);
 
-      const data = await getHabits();
-
-      setHabits(data);
+      // Socket.IO updates Zustand automatically
     } catch (error) {
       setError(
-        error instanceof Error ? error.message : "Failed to load habits",
+        error instanceof Error ? error.message : "Failed to create habit",
       );
+
+      throw error;
     } finally {
       setLoading(false);
     }
   }
 
-  async function addHabit(values: HabitFormValues) {
+  async function editHabit(id: string, values: HabitFormValues) {
     try {
-      const habit = await createHabit(values);
+      setLoading(true);
 
-      setHabits((prev) => [...prev, habit]);
+      await updateHabit({
+        id,
+        ...values,
+      });
 
-      return habit;
+      // Socket.IO updates Zustand automatically
     } catch (error) {
-      throw error;
-    }
-  }
-
-  async function editHabit(id: string, values: Partial<HabitFormValues>) {
-    try {
-      const updatedHabit = await updateHabit(id, values);
-
-      setHabits((prev) =>
-        prev.map((habit) => (habit.id === id ? updatedHabit : habit)),
+      setError(
+        error instanceof Error ? error.message : "Failed to update habit",
       );
 
-      return updatedHabit;
-    } catch (error) {
       throw error;
+    } finally {
+      setLoading(false);
     }
   }
 
-  async function removeHabit(id: string) {
-    try {
-      await deleteHabit(id);
+async function removeHabit(id:string) {
+  try {
 
-      setHabits((prev) => prev.filter((habit) => habit.id !== id));
-    } catch (error) {
-      throw error;
-    }
+    setLoading(true);
+
+    console.log("HOOK DELETE:", id);
+
+    await deleteHabit(id);
+
+    console.log("DELETE ACTION FINISHED");
+
+  } catch(error){
+
+    console.error("DELETE ERROR:",error);
+
+    throw error;
+
+  } finally {
+
+    setLoading(false);
+
   }
+}
 
-  useEffect(() => {
-    fetchHabits();
-  }, []);
+async function completeHabit(id: string) {
+  try {
+    setLoading(true);
+
+    console.log("HOOK COMPLETE:", id);
+
+    await completeHabitAction(id);
+
+    console.log("COMPLETE ACTION FINISHED");
+
+  } catch (error) {
+
+    console.error("COMPLETE ERROR:", error);
+
+    setError(
+      error instanceof Error
+        ? error.message
+        : "Failed to complete habit"
+    );
+
+    throw error;
+
+  } finally {
+    setLoading(false);
+  }
+}
 
   return {
     habits,
     loading,
     error,
 
-    refresh: fetchHabits,
-
     addHabit,
-
     editHabit,
-
     removeHabit,
+    completeHabit,
   };
 }

@@ -6,16 +6,11 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { habits } from "@/drizzle/schema";
-
-import { getSocketServer } from "@/socket/server";
-
 import { emitHabitCreated } from "@/lib/socket/emitters";
 
 const createHabitSchema = z.object({
   title: z.string().min(1),
-
   description: z.string().optional(),
-
   category: z.enum([
     "custom",
     "health",
@@ -28,13 +23,9 @@ const createHabitSchema = z.object({
     "mindfulness",
     "nutrition",
   ]),
-
   frequency: z.enum(["daily", "weekly", "monthly"]),
-
   targetDays: z.number().min(1),
-
   reminderTime: z.string().optional(),
-
   active: z.boolean(),
 });
 
@@ -69,18 +60,6 @@ export async function createHabit(input: CreateHabitInput) {
 
       reminderTime: data.reminderTime ?? null,
 
-      active: data.active,
-    });
-
-    const io = getSocketServer();
-
-    emitHabitCreated(io, session.user.id, {
-      id: habitId,
-      title: data.title,
-      category: data.category,
-      frequency: data.frequency,
-      targetDays: data.targetDays,
-      reminderTime: data.reminderTime,
       active: data.active,
     });
     revalidatePath("/dashboard");

@@ -6,15 +6,22 @@ import { useRealtimeHabits } from "@/hooks/useRealtimeHabits";
 
 interface Props {
   habits: any[];
+
   streaks: Record<string, number>;
+
   progress: Record<string, number>;
-  completion: Record<string, number>;
+
+  onComplete: (id: string) => void;
+
+  onDelete: (id: string) => void;
 }
 
 export default function RealtimeHabitList({
   habits: initialHabits,
   streaks,
   progress,
+  onComplete,
+  onDelete,
 }: Props) {
   const habits = useRealtimeHabits(initialHabits);
 
@@ -32,6 +39,8 @@ export default function RealtimeHabitList({
           active={habit.active}
           streak={streaks[habit.id] ?? 0}
           completion={progress[habit.id] ?? 0}
+          onComplete={onComplete}
+          onDelete={onDelete}
         />
       ))}
     </div>
