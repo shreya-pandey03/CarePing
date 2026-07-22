@@ -12,7 +12,6 @@ import {
   weeklyReportQueue,
   monthlyReportQueue,
 } from "@/jobs/queues";
-import { emitHabitDeleted } from "@/lib/socket/emitters";
 
 export async function deleteHabit(habitId: string) {
   const session = await auth();
@@ -35,32 +34,26 @@ export async function deleteHabit(habitId: string) {
       };
     }
 
-    await db.transaction(async (tx) => {
-      // Delete all logs
-      await tx.delete(habitLogs).where(eq(habitLogs.habitId, habitId));
+    await db.delete(habitLogs).where(eq(habitLogs.habitId, habitId));
 
-      // Delete streak
-      await tx.delete(streaks).where(eq(streaks.habitId, habitId));
+    await db.delete(streaks).where(eq(streaks.habitId, habitId));
 
-      // Delete habit
-      await tx.delete(habits).where(eq(habits.id, habitId));
-    });
+    await db
+      .delete(habits)
+      .where(and(eq(habits.id, habitId), eq(habits.userId, session.user.id)));
 
     // Queue regeneration jobs
     try {
-      await Promise.all([
+      Promise.all([
         aiQueue.add("generate-ai-insights", {
           userId: session.user.id,
         }),
-
         recommendationQueue.add("generate-recommendations", {
           userId: session.user.id,
         }),
-
         weeklyReportQueue.add("refresh-weekly-report", {
           userId: session.user.id,
         }),
-
         monthlyReportQueue.add("refresh-monthly-report", {
           userId: session.user.id,
         }),

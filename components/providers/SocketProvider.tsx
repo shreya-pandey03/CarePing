@@ -42,8 +42,10 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     return () => {
       socket.off("connect");
       socket.off("disconnect");
-
-      socket.disconnect();
+      socket.off("habit:created");
+      socket.off("habit:updated");
+      socket.off("habit:deleted");
+      socket.off("habit:completed");
     };
   }, [socket]);
 

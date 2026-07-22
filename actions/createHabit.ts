@@ -5,8 +5,7 @@ import { z } from "zod";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { habits } from "@/drizzle/schema";
-import { emitHabitCreated } from "@/lib/socket/emitters";
+import { habits, streaks } from "@/drizzle/schema";
 
 const createHabitSchema = z.object({
   title: z.string().min(1),
@@ -45,23 +44,27 @@ export async function createHabit(input: CreateHabitInput) {
 
     await db.insert(habits).values({
       id: habitId,
-
       userId: session.user.id,
-
       title: data.title,
-
       description: data.description ?? null,
-
       category: data.category,
-
       frequency: data.frequency,
-
       targetDays: data.targetDays,
-
       reminderTime: data.reminderTime ?? null,
-
       active: data.active,
     });
+
+
+    await db.insert(streaks).values({
+      id: crypto.randomUUID(),
+      userId: session.user.id,
+      habitId,
+      currentStreak: 0,
+      longestStreak: 0,
+      totalCompletions: 0,
+      lastCompletedAt: null,
+    });
+
     revalidatePath("/dashboard");
     revalidatePath("/habits");
 
@@ -70,7 +73,16 @@ export async function createHabit(input: CreateHabitInput) {
       message: "Habit created successfully.",
     };
   } catch (error) {
-    console.error("Create Habit Error:", error);
+    if (error instanceof Error) {
+      console.error("Create Habit Error:", error.message, error.stack);
+    } else {
+      console.error("Create Habit Error:", error);
+
+      if (error instanceof Error) {
+        console.error("Message:", error.message);
+        console.error("Stack:", error.stack);
+      }
+    }
 
     return {
       success: false,
