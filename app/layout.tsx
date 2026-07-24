@@ -4,6 +4,7 @@ import "./globals.css";
 
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { SocketProvider } from "@/components/providers/SocketProvider";
+import { SessionProvider } from "next-auth/react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,15 +32,17 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full`}
     >
-      <body className="min-h-screen antialiased">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <SocketProvider>{children}</SocketProvider>
-        </ThemeProvider>
+      <body>
+        <SessionProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <SocketProvider>{children}</SocketProvider>
+          </ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   );

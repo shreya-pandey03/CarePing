@@ -36,6 +36,7 @@ export async function deleteHabit(habitId: string) {
       };
     }
 
+    
     await db.delete(habitLogs).where(eq(habitLogs.habitId, habitId));
 
     await db.delete(streaks).where(eq(streaks.habitId, habitId));
