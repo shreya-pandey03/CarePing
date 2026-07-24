@@ -8,6 +8,8 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { habits } from "@/drizzle/schema";
 import { emitHabitUpdated } from "@/lib/socket/emitters";
+import { publishRealtimeEvent } from "@/lib/realtime/publisher";
+import { CHANNELS } from "@/lib/realtime/channels";
 
 const updateHabitSchema = z.object({
   id: z.string(),
@@ -69,19 +71,12 @@ export async function updateHabit(input: UpdateHabitInput) {
       .update(habits)
       .set({
         title: data.title,
-
         description: data.description ?? null,
-
         category: data.category,
-
         frequency: data.frequency,
-
         targetDays: data.targetDays,
-
         reminderTime: data.reminderTime ?? null,
-
         active: data.active,
-
         updatedAt: new Date(),
       })
       .where(
@@ -91,6 +86,13 @@ export async function updateHabit(input: UpdateHabitInput) {
           eq(habits.userId, session.user.id),
         ),
       );
+
+    await publishRealtimeEvent(CHANNELS.HABIT_UPDATED, {
+      userId: session.user.id,
+      type: CHANNELS.HABIT_UPDATED,
+      payload: updateHabit,
+    });
+
     revalidatePath("/dashboard");
     revalidatePath("/habits");
     revalidatePath(`/habits/${data.id}`);

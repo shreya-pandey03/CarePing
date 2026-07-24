@@ -6,6 +6,8 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { habits, streaks } from "@/drizzle/schema";
+import { publishRealtimeEvent } from "@/lib/realtime/publisher";
+import { CHANNELS } from "@/lib/realtime/channels";
 
 const createHabitSchema = z.object({
   title: z.string().min(1),
@@ -54,7 +56,6 @@ export async function createHabit(input: CreateHabitInput) {
       active: data.active,
     });
 
-
     await db.insert(streaks).values({
       id: crypto.randomUUID(),
       userId: session.user.id,
@@ -63,6 +64,12 @@ export async function createHabit(input: CreateHabitInput) {
       longestStreak: 0,
       totalCompletions: 0,
       lastCompletedAt: null,
+    });
+
+    await publishRealtimeEvent(CHANNELS.HABIT_CREATED, {
+      userId: session.user.id,
+      type: CHANNELS.HABIT_CREATED,
+      payload: habitId,
     });
 
     revalidatePath("/dashboard");

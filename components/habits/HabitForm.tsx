@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useRouter } from "next/navigation";
 
 interface HabitFormProps {
   habitId?: string;
@@ -60,6 +61,7 @@ const formSchema = z.object({
 type HabitFormValues = z.infer<typeof formSchema>;
 
 export default function HabitForm({ habitId, defaultValues }: HabitFormProps) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
 
   const form = useForm<HabitFormValues>({
@@ -83,13 +85,15 @@ export default function HabitForm({ habitId, defaultValues }: HabitFormProps) {
             ...values,
           })
         : await createHabit(values);
-
       if (!result.success) {
         console.error(result.message);
         return;
       }
 
       form.reset();
+
+      router.push("/habits");
+      router.refresh();
     });
   }
 

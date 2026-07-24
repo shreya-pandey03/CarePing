@@ -12,6 +12,8 @@ import {
   weeklyReportQueue,
   monthlyReportQueue,
 } from "@/jobs/queues";
+import { publishRealtimeEvent } from "@/lib/realtime/publisher";
+import { CHANNELS } from "@/lib/realtime/channels";
 
 export async function deleteHabit(habitId: string) {
   const session = await auth();
@@ -37,6 +39,14 @@ export async function deleteHabit(habitId: string) {
     await db.delete(habitLogs).where(eq(habitLogs.habitId, habitId));
 
     await db.delete(streaks).where(eq(streaks.habitId, habitId));
+
+    await publishRealtimeEvent(CHANNELS.HABIT_DELETED, {
+      userId: session.user.id,
+      type: CHANNELS.HABIT_DELETED,
+      payload: {
+        habitId,
+      },
+    });
 
     await db
       .delete(habits)

@@ -6,11 +6,8 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { habitLogs, habits, streaks } from "@/drizzle/schema";
-import { redis } from "@/lib/redis";
-
-function getDateOnly(date: Date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-}
+import { publishRealtimeEvent } from "@/lib/realtime/publisher";
+import { CHANNELS } from "@/lib/realtime/channels";
 
 function isSameDay(date1: Date, date2: Date) {
   return (
@@ -74,6 +71,14 @@ export async function completeHabit(habitId: string) {
       completedAt: today,
     });
 
+    await publishRealtimeEvent(CHANNELS.HABIT_COMPLETED, {
+      userId: session.user.id,
+      type: CHANNELS.HABIT_COMPLETED,
+      payload: {
+        habitId,
+      },
+    });
+
     // 2. Get current streak
 
     const streak = await db.query.streaks.findFirst({
@@ -132,9 +137,7 @@ export async function completeHabit(habitId: string) {
     // }
 
     revalidatePath("/dashboard");
-
     revalidatePath("/habits");
-
     revalidatePath(`/habits/${habitId}`);
 
     return {
