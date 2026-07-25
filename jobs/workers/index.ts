@@ -7,9 +7,10 @@ import "./notification.worker";
 import "./analytics.worker";
 import "./cache.worker";
 import "./cleanup.worker";
+import "./analytics.worker";
 
 console.log(" Habitly Workers Started");
-
+console.log("Workers started");
 process.on("SIGINT", () => {
   console.log("Stopping workers...");
   process.exit(0);

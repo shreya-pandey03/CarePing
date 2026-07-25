@@ -6,12 +6,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { habits, habitLogs, streaks } from "@/drizzle/schema";
-import {
-  aiQueue,
-  recommendationQueue,
-  weeklyReportQueue,
-  monthlyReportQueue,
-} from "@/jobs/queues";
+import { aiQueue, recommendationQueue } from "@/jobs/queues";
 import { publishRealtimeEvent } from "@/lib/realtime/publisher";
 import { CHANNELS } from "@/lib/realtime/channels";
 
@@ -36,7 +31,6 @@ export async function deleteHabit(habitId: string) {
       };
     }
 
-    
     await db.delete(habitLogs).where(eq(habitLogs.habitId, habitId));
 
     await db.delete(streaks).where(eq(streaks.habitId, habitId));
@@ -55,19 +49,34 @@ export async function deleteHabit(habitId: string) {
 
     // Queue regeneration jobs
     try {
-      Promise.all([
-        aiQueue.add("generate-ai-insights", {
-          userId: session.user.id,
-        }),
-        recommendationQueue.add("generate-recommendations", {
-          userId: session.user.id,
-        }),
-        weeklyReportQueue.add("refresh-weekly-report", {
-          userId: session.user.id,
-        }),
-        monthlyReportQueue.add("refresh-monthly-report", {
-          userId: session.user.id,
-        }),
+      await Promise.all([
+        aiQueue.add(
+          "generate-ai-insights",
+          {
+            userId: session.user.id,
+          },
+          {
+            attempts: 3,
+            backoff: {
+              type: "exponential",
+              delay: 5000,
+            },
+          },
+        ),
+
+        recommendationQueue.add(
+          "generate-recommendations",
+          {
+            userId: session.user.id,
+          },
+          {
+            attempts: 3,
+            backoff: {
+              type: "exponential",
+              delay: 5000,
+            },
+          },
+        ),
       ]);
     } catch (queueError) {
       console.error("Queue Error:", queueError);

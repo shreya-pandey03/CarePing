@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { habitLogs, habits, streaks } from "@/drizzle/schema";
 import { publishRealtimeEvent } from "@/lib/realtime/publisher";
 import { CHANNELS } from "@/lib/realtime/channels";
+import { analyticsQueue } from "@/jobs/queues/analytics.queue";
 
 function isSameDay(date1: Date, date2: Date) {
   return (
@@ -135,6 +136,11 @@ export async function completeHabit(habitId: string) {
     // } catch (error) {
     //   console.error("Redis cache clear failed:", error);
     // }
+
+    await analyticsQueue.add("update-analytics", {
+      userId: session.user.id,
+      habitId,
+    });
 
     revalidatePath("/dashboard");
     revalidatePath("/habits");

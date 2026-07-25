@@ -11,33 +11,23 @@ interface MonthlyReportJobData {
 
 export const monthlyReportWorker = new Worker<MonthlyReportJobData>(
   "monthly-reports",
-
   async (job: Job<MonthlyReportJobData>) => {
     try {
       const { userId } = job.data;
-
       console.log(`Generating Monthly Report for ${userId}`);
 
       // Current Month
-
       const now = new Date();
-
       const month = now.getMonth() + 1;
-
       const year = now.getFullYear();
-
       const start = new Date(year, month - 1, 1);
-
       const end = new Date(year, month, 0, 23, 59, 59, 999);
-
       // Load Habits
-
       const userHabits = await db.query.habits.findMany({
         where: eq(habits.userId, userId),
       });
 
       // Load Logs
-
       const logs = await db.query.habitLogs.findMany({
         where: and(
           eq(habitLogs.userId, userId),
@@ -65,48 +55,34 @@ export const monthlyReportWorker = new Worker<MonthlyReportJobData>(
 
       // AI Report
 
-      const ai = await generateWeeklyReport({
-        habits: userHabits,
-        logs,
-        streaks: userStreaks,
-      });
+      const result = await generateWeeklyReport(userId);
 
       // Save Report
 
       await db.insert(monthlyReports).values({
         id: crypto.randomUUID(),
-
         userId,
-
         month,
-
         year,
-
         completionRate,
-
         totalHabits,
-
         completedHabits,
-
-        report: JSON.stringify(ai),
-
-        aiSummary: ai.summary,
+        report: JSON.stringify(result.report),
+        aiSummary: result.report.summary,
       });
-
       console.log("Monthly Report Saved");
-
       return {
         success: true,
       };
     } catch (error) {
       console.error("Monthly Report Worker Error", error);
-
       throw error;
     }
   },
   {
     connection,
     concurrency: 1,
+    lockDuration: 8 * 60 * 1000, // 8 minutes
   },
 );
 

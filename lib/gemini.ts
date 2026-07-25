@@ -6,10 +6,13 @@ if (!apiKey) {
   throw new Error("GEMINI_API_KEY is missing in your environment variables.");
 }
 
+// Change this in one place if you switch models.
+const GEMINI_MODEL =
+  process.env.GEMINI_MODEL ?? "gemini-3.5-flash";
+
 export const ai = new GoogleGenAI({
   apiKey,
 });
-
 export interface AIInsight {
   title: string;
   summary: string;
@@ -19,7 +22,7 @@ export interface AIInsight {
 export async function generateInsight(prompt: string): Promise<AIInsight> {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: GEMINI_MODEL,
       contents: prompt,
       config: {
         temperature: 0.7,
@@ -44,7 +47,13 @@ export async function generateInsight(prompt: string): Promise<AIInsight> {
   } catch (error) {
     console.error("Gemini Error:", error);
 
-    throw new Error("Failed to generate AI insight.");
+    if (error instanceof Error && error.message.includes("404")) {
+      throw new Error(
+        "The configured Gemini model is not available. Update GEMINI_MODEL.",
+      );
+    }
+
+    throw error;
   }
 }
 
@@ -61,7 +70,7 @@ export async function generateWeeklyReport(
 ): Promise<WeeklyReport> {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: GEMINI_MODEL,
       contents: prompt,
       config: {
         temperature: 0.6,
@@ -93,7 +102,7 @@ export async function generateRecommendations(
 ): Promise<RecommendationResult> {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: GEMINI_MODEL,
       contents: prompt,
       config: {
         temperature: 0.8,
@@ -125,7 +134,7 @@ export async function generateMotivation(
 ): Promise<MotivationResult> {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: GEMINI_MODEL,
       contents: prompt,
       config: {
         temperature: 1,
@@ -161,7 +170,7 @@ export async function generateGoalOptimization(
 ): Promise<GoalOptimizationResult[]> {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: GEMINI_MODEL,
 
       contents: prompt,
 

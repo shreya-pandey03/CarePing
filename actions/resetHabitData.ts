@@ -65,20 +65,49 @@ export async function resetHabitData() {
     redis.del(`reports:${userId}`),
     redis.del(`notifications:${userId}`),
   ]);
-
   // Queue regeneration of AI data
   await Promise.all([
-    aiQueue.add("generate-ai-insights", {
-      userId,
-    }),
+    aiQueue.add(
+      "generate-ai-insights",
+      {
+        userId,
+      },
+      {
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 5000,
+        },
+      },
+    ),
 
-    recommendationQueue.add("generate-recommendations", {
-      userId,
-    }),
+    recommendationQueue.add(
+      "generate-recommendations",
+      {
+        userId,
+      },
+      {
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 5000,
+        },
+      },
+    ),
 
-    weeklyReportQueue.add("refresh-weekly-report", {
-      userId,
-    }),
+    weeklyReportQueue.add(
+      "refresh-weekly-report",
+      {
+        userId,
+      },
+      {
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 5000,
+        },
+      },
+    ),
   ]);
 
   revalidatePath("/dashboard");
