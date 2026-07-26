@@ -1,14 +1,11 @@
 "use server";
 
 import { and, eq, gte, lte } from "drizzle-orm";
-
-import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { redis } from "@/lib/redis";
 
 import { generateWeeklyReport as generateAIWeeklyReport } from "@/lib/gemini";
 import { buildWeeklyReportPrompt } from "@/lib/promptBuilder";
-
 import {
   habits,
   habitLogs,
@@ -37,10 +34,7 @@ export async function generateWeeklyReport(
 ): Promise<GenerateWeeklyReportResult> {
   try {
     const cacheKey = `weekly-report:${userId}`;
-
-    // -----------------------
     // Cache
-    // -----------------------
 
     try {
       const cached = await redis.get(cacheKey);
@@ -51,10 +45,7 @@ export async function generateWeeklyReport(
     } catch (error) {
       console.error("Weekly report cache read failed:", error);
     }
-
-    // -----------------------
     // Week Range
-    // -----------------------
 
     const weekEnd = new Date();
     weekEnd.setHours(23, 59, 59, 999);
@@ -63,9 +54,7 @@ export async function generateWeeklyReport(
     weekStart.setDate(weekEnd.getDate() - 6);
     weekStart.setHours(0, 0, 0, 0);
 
-    // -----------------------
     // Load Data
-    // -----------------------
 
     const userHabits = await db.query.habits.findMany({
       where: eq(habits.userId, userId),
@@ -87,18 +76,13 @@ export async function generateWeeklyReport(
       where: eq(goals.userId, userId),
     });
 
-    // -----------------------
     // Completion Rate
-    // -----------------------
-
     const completionRate =
       userHabits.length === 0
         ? 0
         : Math.round((logs.length / (userHabits.length * 7)) * 100);
 
-    // -----------------------
     // Build Prompt
-    // -----------------------
 
     const prompt = buildWeeklyReportPrompt({
       habits: userHabits,
@@ -107,10 +91,7 @@ export async function generateWeeklyReport(
       goals: userGoals,
     });
 
-    // -----------------------
     // Gemini
-    // -----------------------
-
     const aiReport = await generateAIWeeklyReport(prompt);
 
     const report: WeeklyReport = {
@@ -121,18 +102,11 @@ export async function generateWeeklyReport(
       recommendations: aiReport.recommendations || [],
     };
 
-    // -----------------------
     // Remove old report
-    // -----------------------
 
-    await db
-      .delete(weeklyReports)
-      .where(eq(weeklyReports.userId, userId));
+    await db.delete(weeklyReports).where(eq(weeklyReports.userId, userId));
 
-    // -----------------------
     // Save report
-    // -----------------------
-
     await db.insert(weeklyReports).values({
       id: crypto.randomUUID(),
       userId,
@@ -154,9 +128,7 @@ export async function generateWeeklyReport(
       report,
     };
 
-    // -----------------------
     // Cache
-    // -----------------------
 
     try {
       await redis.set(cacheKey, JSON.stringify(result), "EX", CACHE_TTL);
