@@ -38,46 +38,25 @@ export const authConfig = {
   },
 
   session: {
-    strategy: "database",
+    strategy: "jwt",
   },
 
   callbacks: {
-    async session({ session, user }) {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+
+      return token;
+    },
+
+    async session({ session, token }) {
       if (session.user) {
-        session.user.id = user.id;
+        session.user.id = token.id as string;
       }
 
       return session;
     },
-
-    async authorized({ auth, request }) {
-      const isLoggedIn = !!auth?.user;
-
-      const pathname = request.nextUrl.pathname;
-
-      const protectedRoutes = [
-        "/dashboard",
-        "/habits",
-        "/analytics",
-        "/reports",
-        "/recommendations",
-        "/goals",
-        "/streaks",
-        "/notifications",
-        "/profile",
-      ];
-
-      const isProtected = protectedRoutes.some((route) =>
-        pathname.startsWith(route),
-      );
-
-      if (isProtected && !isLoggedIn) {
-        return false;
-      }
-
-      return true;
-    },
   },
-
   trustHost: true,
 } satisfies NextAuthConfig;
