@@ -307,9 +307,7 @@ export const accounts = pgTable(
   "account",
   {
     userId: text("user_id")
-      .references(() => users.id, {
-        onDelete: "cascade",
-      })
+      .references(() => users.id, { onDelete: "cascade" })
       .notNull(),
     type: text("type").notNull(),
     provider: text("provider").notNull(),
@@ -336,9 +334,7 @@ export const sessions = pgTable("session", {
       onDelete: "cascade",
     })
     .notNull(),
-  expires: timestamp("expires", {
-    mode: "date",
-  }).notNull(),
+  expires: timestamp("expires").notNull(),
 });
 
 export const verificationTokens = pgTable(
@@ -346,9 +342,7 @@ export const verificationTokens = pgTable(
   {
     identifier: text("identifier").notNull(),
     token: text("token").notNull(),
-    expires: timestamp("expires", {
-      mode: "date",
-    }).notNull(),
+    expires: timestamp("expires").notNull(),
   },
   (table) => ({
     compositePk: primaryKey({

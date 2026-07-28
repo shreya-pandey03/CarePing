@@ -1,9 +1,8 @@
 import type { NextAuthConfig } from "next-auth";
-
 import Google from "next-auth/providers/google";
 import GitHub from "next-auth/providers/github";
-
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
+
 import { db } from "@/lib/db";
 import {
   users,
@@ -12,10 +11,10 @@ import {
   verificationTokens,
 } from "@/drizzle/schema";
 
-export const authConfig = {
+export const authConfig: NextAuthConfig = {
   adapter: DrizzleAdapter(db, {
     usersTable: users,
-    accountsTable: accounts,
+    accountsTable: accounts as any,
     sessionsTable: sessions,
     verificationTokensTable: verificationTokens,
   }),
@@ -51,12 +50,14 @@ export const authConfig = {
     },
 
     async session({ session, token }) {
-      if (session.user) {
+      if (session.user && token.id) {
         session.user.id = token.id as string;
       }
 
       return session;
     },
   },
+
+  debug: true,
   trustHost: true,
-} satisfies NextAuthConfig;
+};
