@@ -123,3 +123,32 @@ export interface DashboardAnalytics {
 
   heatmap: HeatmapData[];
 }
+
+export interface DashboardStats {
+  totalHabits: number;
+  completedToday: number;
+  activeHabits: number;
+  currentStreak: number;
+  longestStreak: number;
+  completionRate: number;
+}
+
+export interface WeeklyAnalytics {
+  totalHabits: number;
+  completedHabits: number;
+  completionRate: number;
+  currentWeek: string;
+}
+
+export interface MonthlyAnalytics {
+  totalHabits: number;
+  completedHabits: number;
+  completionRate: number;
+  month: number;
+  year: number;
+}
+
+export interface CompletionHistory {
+  date: string;
+  completed: number;
+}

@@ -48,7 +48,7 @@ export default function HabitList({
           </p>
 
           <Button className="mt-8">
-            <Link href="/habits/create">
+            <Link href="/habits/new">
               <Plus className="mr-2 h-4 w-4" />
               Create Habit
             </Link>
@@ -72,8 +72,8 @@ export default function HabitList({
           </p>
         </div>
 
-        <Button >
-          <Link href="/habits/create">
+        <Button>
+          <Link href="/habits/new">
             <Plus className="mr-2 h-4 w-4" />
             New Habit
           </Link>

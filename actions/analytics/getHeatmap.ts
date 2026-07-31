@@ -1,14 +1,14 @@
 "use server";
 
 import { auth } from "@/auth";
-import { getWeeklyAnalytics } from "@/lib/analytics/weekly";
+import { getHeatmapData } from "@/lib/analytics/heatmap";
 
-export async function getWeeklyStats() {
+export async function getHeatmap() {
   const session = await auth();
 
   if (!session?.user?.id) {
     throw new Error("Unauthorized");
   }
 
-  return getWeeklyAnalytics(session.user.id);
+  return getHeatmapData(session.user.id);
 }

@@ -4,7 +4,6 @@ import { auth } from "@/auth";
 import HabitForm from "@/components/habits/HabitForm";
 
 
-
 export default async function NewHabitPage() {
   const session = await auth();
 

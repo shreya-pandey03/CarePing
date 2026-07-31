@@ -7,7 +7,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { habits, habitLogs, streaks } from "@/drizzle/schema";
 import HabitsClient from "@/components/habits/HabitsClient";
-import HabitCard from "@/components/habits/HabitCard";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -34,11 +34,10 @@ export default async function HabitsPage() {
   });
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">My Habits</h1>
-
           <p className="text-muted-foreground">
             Manage your daily habits and keep your streak alive.
           </p>
