@@ -13,8 +13,7 @@ export function calculateCompletionRate(
 }
 
 /**
- * Average consistency score
- */
+ * Average consistency score*/
 export function calculateConsistency(values: number[]): number {
   if (values.length === 0) {
     return 0;

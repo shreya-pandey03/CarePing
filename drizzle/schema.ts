@@ -12,6 +12,8 @@ import {
   json,
 } from "drizzle-orm/pg-core";
 
+import { InferSelectModel, InferInsertModel } from "drizzle-orm";
+
 export const habitFrequency = pgEnum("habit_frequency", [
   "daily",
   "weekly",
@@ -420,3 +422,12 @@ export const habitCorrelations = pgTable("habit_correlations", {
     .defaultNow()
     .notNull(),
 });
+
+export type Habit = InferSelectModel<typeof habits>;
+export type NewHabit = InferInsertModel<typeof habits>;
+
+export type HabitLog = InferSelectModel<typeof habitLogs>;
+export type NewHabitLog = InferInsertModel<typeof habitLogs>;
+
+export type Streak = InferSelectModel<typeof streaks>;
+export type NewStreak = InferInsertModel<typeof streaks>;

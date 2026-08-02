@@ -6,7 +6,6 @@ export async function getDashboardCache(userId: string) {
   if (cached) {
     return JSON.parse(cached);
   }
-
   return null;
 }
 

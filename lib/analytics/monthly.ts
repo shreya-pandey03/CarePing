@@ -1,37 +1,76 @@
-import { db } from "@/lib/db";
-import { habits, habitLogs } from "@/drizzle/schema";
-import { eq, and, gte, lte } from "drizzle-orm";
+import {
+  and,
+  eq,
+  gte,
+} from "drizzle-orm";
 
-import { getMonthRange } from "./helpers";
-import { calculateCompletionRate } from "./completion";
+import {
+  startOfMonth,
+} from "date-fns";
 
-export async function getMonthlyAnalytics(userId: string) {
-  const { start, end } = getMonthRange();
+import {
+  db,
+} from "@/lib/db";
 
-  const habitsList = await db.query.habits.findMany({
-    where: eq(habits.userId, userId),
-  });
+import {
+  habits,
+  habitLogs,
+} from "@/drizzle/schema";
 
-  const completed = await db.query.habitLogs.findMany({
-    where: and(
-      eq(habitLogs.userId, userId),
-      gte(habitLogs.completedAt, start),
-      lte(habitLogs.completedAt, end),
-    ),
-  });
+export async function getMonthlyAnalytics(
+  userId: string
+) {
+  const start =
+    startOfMonth(new Date());
+
+  const userHabits =
+    await db.query.habits.findMany({
+      where: and(
+        eq(habits.userId, userId),
+        eq(habits.active, true),
+      ),
+    });
+
+  const logs =
+    await db.query.habitLogs.findMany({
+      where: and(
+        eq(habitLogs.userId, userId),
+        gte(
+          habitLogs.completedAt,
+          start
+        ),
+      ),
+    });
+
+  const uniqueHabits =
+    new Set(
+      logs.map((l) => l.habitId)
+    );
+
+  const completedHabits =
+    uniqueHabits.size;
+
+  const totalHabits =
+    userHabits.length;
+
+  const completionRate =
+    totalHabits === 0
+      ? 0
+      : Math.round(
+          (completedHabits /
+            totalHabits) *
+            100
+        );
 
   return {
-    totalHabits: habitsList.length,
+    completedHabits,
+    totalHabits,
+    completionRate,
 
-    completedHabits: completed.length,
+    month:
+      start.getMonth() + 1,
 
-    completionRate: calculateCompletionRate(
-      completed.length,
-      habitsList.length,
-    ),
-
-    month: start.getMonth() + 1,
-
-    year: start.getFullYear(),
+    year:
+      start.getFullYear(),
   };
 }

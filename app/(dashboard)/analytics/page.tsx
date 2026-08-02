@@ -20,6 +20,8 @@ import Heatmap from "@/components/analytics/Heatmap";
 import CorrelationChart from "@/components/analytics/CorrelationChart";
 import HabitPerformance from "@/components/analytics/HabitPerformance";
 import { getHeatmap } from "@/actions/analytics/getHeatmap";
+import InsightsCard from "@/components/analytics/InsightsCard";
+import { generateInsights } from "@/lib/insights/generateInsights";
 
 export default async function AnalyticsPage() {
   const session = await auth();
@@ -42,6 +44,12 @@ export default async function AnalyticsPage() {
 
   const userStreaks = await db.query.streaks.findMany({
     where: eq(streaks.userId, userId),
+  });
+
+  const insights = generateInsights({
+    habits: userHabits,
+    logs,
+    streaks: userStreaks,
   });
 
   // Habit Performance Data
@@ -121,7 +129,7 @@ export default async function AnalyticsPage() {
       {/* Correlation */}
 
       <CorrelationChart data={history.correlationData} />
-
+      <InsightsCard insights={insights} />
       {/* Weekly + Monthly Analytics */}
 
       <div className="grid gap-6 lg:grid-cols-2">

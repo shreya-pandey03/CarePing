@@ -1,51 +1,29 @@
-import { db } from "@/lib/db";
-import { habits, habitLogs, streaks } from "@/drizzle/schema";
-import { eq, and, gte } from "drizzle-orm";
+import { and, eq, gte } from "drizzle-orm";
 
-import { calculateCompletionRate } from "./completion";
+import { db } from "@/lib/db";
+import { habits, habitLogs } from "@/drizzle/schema";
 
 export async function getDashboardAnalytics(userId: string) {
+  const userHabits = await db.query.habits.findMany({
+    where: and(eq(habits.userId, userId), eq(habits.active, true)),
+  });
+
   const today = new Date();
 
-  const userHabits = await db.query.habits.findMany({
-    where: eq(habits.userId, userId),
+  today.setHours(0, 0, 0, 0);
+
+  const todayLogs = await db.query.habitLogs.findMany({
+    where: and(eq(habitLogs.userId, userId), gte(habitLogs.completedAt, today)),
   });
-
-  const completedToday = await db.query.habitLogs.findMany({
-    where: and(
-      eq(habitLogs.userId, userId),
-      gte(habitLogs.completedAt, new Date(today.setHours(0, 0, 0, 0))),
-    ),
-  });
-
-  const userStreaks = await db.query.streaks.findMany({
-    where: eq(streaks.userId, userId),
-  });
-
-  const longestStreak =
-    userStreaks.length === 0
-      ? 0
-      : Math.max(...userStreaks.map((s) => s.longestStreak));
-
-  const currentStreak = userStreaks.reduce(
-    (acc, item) => acc + item.currentStreak,
-    0,
-  );
+  const completedHabitIds = new Set(todayLogs.map((log) => log.habitId));
+  const completedToday = completedHabitIds.size;
+  const totalHabits = userHabits.length;
+  const completionRate =
+    totalHabits === 0 ? 0 : Math.round((completedToday / totalHabits) * 100);
 
   return {
-    totalHabits: userHabits.length,
-
-    activeHabits: userHabits.filter((h) => h.active).length,
-
-    completedToday: completedToday.length,
-
-    currentStreak,
-
-    longestStreak,
-
-    completionRate: calculateCompletionRate(
-      completedToday.length,
-      userHabits.length,
-    ),
+    totalHabits,
+    completedToday,
+    completionRate,
   };
 }

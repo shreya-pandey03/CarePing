@@ -13,8 +13,6 @@ export function calculateHabitPerformance(
 
 
   const totalCompleted = habitLogs.length;
-
-
   const today = new Date();
 
 
