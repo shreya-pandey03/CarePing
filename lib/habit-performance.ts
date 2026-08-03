@@ -15,7 +15,6 @@ export function calculateHabitPerformance(
   const totalCompleted = habitLogs.length;
   const today = new Date();
 
-
   const daysSinceCreated =
     Math.max(
       1,
