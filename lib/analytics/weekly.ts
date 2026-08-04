@@ -59,7 +59,6 @@ export async function getWeeklyAnalytics(
             totalHabits) *
             100
         );
-
   return {
     completedHabits,
     totalHabits,

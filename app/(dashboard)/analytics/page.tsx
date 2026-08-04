@@ -103,7 +103,6 @@ export default async function AnalyticsPage() {
           <p className="text-3xl font-bold">{dashboard.completionRate}%</p>
         </div>
       </div>
-
       {/* Daily Charts */}
 
       <DailyCompletionChart data={weeklyHistory} />

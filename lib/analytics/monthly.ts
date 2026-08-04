@@ -61,7 +61,6 @@ export async function getMonthlyAnalytics(
             totalHabits) *
             100
         );
-
   return {
     completedHabits,
     totalHabits,

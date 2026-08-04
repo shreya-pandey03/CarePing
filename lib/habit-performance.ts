@@ -33,7 +33,6 @@ export function calculateHabitPerformance(
       (totalCompleted / daysSinceCreated) * 100
     );
 
-
   const lastCompleted =
     habitLogs.length > 0
       ? habitLogs[0].completedAt

@@ -11,7 +11,6 @@ export async function getDashboardAnalytics(userId: string) {
   const today = new Date();
 
   today.setHours(0, 0, 0, 0);
-
   const todayLogs = await db.query.habitLogs.findMany({
     where: and(eq(habitLogs.userId, userId), gte(habitLogs.completedAt, today)),
   });

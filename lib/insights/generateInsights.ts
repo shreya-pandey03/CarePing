@@ -81,6 +81,5 @@ export function generateInsights({ habits, logs, streaks }: Props): string[] {
       " Small daily actions will build stronger streaks over time.",
     );
   }
-
   return insights;
 }
