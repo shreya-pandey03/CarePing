@@ -14,16 +14,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface CorrelationData {
   habit: string;
+
   completionRate: number;
+
   consistency: number;
+
   streak: number;
 }
 
-interface CorrelationChartProps {
+interface Props {
   data: CorrelationData[];
 }
 
-export default function CorrelationChart({ data }: CorrelationChartProps) {
+export default function CorrelationChart({ data }: Props) {
+  const chartData = data.map((item) => ({
+    habit: item.habit,
+
+    completionRate: item.completionRate,
+
+    consistency: item.consistency,
+
+    // convert streak into percentage
+    streak: Math.min(item.streak * 10, 100),
+  }));
+
   return (
     <Card>
       <CardHeader>
@@ -33,37 +47,35 @@ export default function CorrelationChart({ data }: CorrelationChartProps) {
       <CardContent>
         <div className="h-[450px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <RadarChart data={data}>
+            <RadarChart data={chartData}>
               <PolarGrid />
 
               <PolarAngleAxis dataKey="habit" />
 
-              <PolarRadiusAxis angle={90} domain={[0, 100]} />
+              <PolarRadiusAxis
+                angle={90}
+                domain={[0, 100]}
+                tickFormatter={(value) => `${value}%`}
+              />
 
-              <Tooltip />
+              <Tooltip formatter={(value) => `${value}%`} />
 
               <Radar
-                name="Completion Rate"
+                name="Completion"
                 dataKey="completionRate"
-                stroke="#f97316"
-                fill="#f97316"
-                fillOpacity={0.35}
+                fillOpacity={0.25}
               />
 
               <Radar
                 name="Consistency"
                 dataKey="consistency"
-                stroke="#22c55e"
-                fill="#22c55e"
-                fillOpacity={0.25}
+                fillOpacity={0.2}
               />
 
               <Radar
-                name="Streak"
+                name="Streak Strength"
                 dataKey="streak"
-                stroke="#3b82f6"
-                fill="#3b82f6"
-                fillOpacity={0.2}
+                fillOpacity={0.15}
               />
             </RadarChart>
           </ResponsiveContainer>

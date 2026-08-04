@@ -43,7 +43,7 @@ export default function StreakChart({ data }: StreakChartProps) {
 
               <XAxis dataKey="date" />
 
-              <YAxis />
+              <YAxis domain={[0, 100]} />
 
               <Tooltip />
 

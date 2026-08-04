@@ -22,6 +22,7 @@ import HabitPerformance from "@/components/analytics/HabitPerformance";
 import { getHeatmap } from "@/actions/analytics/getHeatmap";
 import InsightsCard from "@/components/analytics/InsightsCard";
 import { generateInsights } from "@/lib/insights/generateInsights";
+import AdvancedHeatmap from "@/components/analytics/AdvancedHeatmap";
 
 export default async function AnalyticsPage() {
   const session = await auth();
@@ -34,17 +35,17 @@ export default async function AnalyticsPage() {
 
   // Load Habit Data
 
-  const userHabits = await db.query.habits.findMany({
-    where: eq(habits.userId, userId),
-  });
-
-  const logs = await db.query.habitLogs.findMany({
-    where: eq(habitLogs.userId, userId),
-  });
-
-  const userStreaks = await db.query.streaks.findMany({
-    where: eq(streaks.userId, userId),
-  });
+  const [userHabits, logs, userStreaks] = await Promise.all([
+    db.query.habits.findMany({
+      where: eq(habits.userId, userId),
+    }),
+    db.query.habitLogs.findMany({
+      where: eq(habitLogs.userId, userId),
+    }),
+    db.query.streaks.findMany({
+      where: eq(streaks.userId, userId),
+    }),
+  ]);
 
   const insights = generateInsights({
     habits: userHabits,
@@ -66,13 +67,60 @@ export default async function AnalyticsPage() {
 
   const monthlyHistory = await getMonthlyHistory();
 
-  const [dashboard, weekly, monthly, history, heatmap] = await Promise.all([
+  const [
+    dashboardResult,
+    weeklyResult,
+    monthlyResult,
+    historyResult,
+    heatmapResult,
+  ] = await Promise.allSettled([
     getDashboardAnalytics(userId),
     getWeeklyAnalytics(userId),
     getMonthlyAnalytics(userId),
     getCompletionHistory(userId),
     getHeatmap(),
   ]);
+
+  const dashboard =
+    dashboardResult.status === "fulfilled"
+      ? dashboardResult.value
+      : {
+          totalHabits: 0,
+          completedToday: 0,
+          completionRate: 0,
+        };
+
+  const weekly =
+    weeklyResult.status === "fulfilled"
+      ? weeklyResult.value
+      : {
+          completionRate: 0,
+          completedHabits: 0,
+          totalHabits: 0,
+          currentWeek: "Unavailable",
+        };
+
+  const monthly =
+    monthlyResult.status === "fulfilled"
+      ? monthlyResult.value
+      : {
+          completionRate: 0,
+          completedHabits: 0,
+          totalHabits: 0,
+          month: "-",
+          year: "-",
+        };
+
+  const history =
+    historyResult.status === "fulfilled"
+      ? historyResult.value
+      : {
+          completionData: [],
+          consistencyData: [],
+          streakData: [],
+          heatmapData: [],
+          correlationData: [],
+        };
 
   return (
     <div className="space-y-8">
@@ -123,7 +171,7 @@ export default async function AnalyticsPage() {
 
       {/* Heatmap */}
 
-      <Heatmap values={heatmap} />
+      <AdvancedHeatmap data={history.heatmapData} />
 
       {/* Correlation */}
 

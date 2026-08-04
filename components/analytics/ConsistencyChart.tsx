@@ -39,8 +39,8 @@ export default function ConsistencyChart({ data }: ConsistencyChartProps) {
               <YAxis domain={[0, 100]} unit="%" />
 
               <Tooltip />
-
-              <Bar dataKey="consistency" fill="#22c55e" radius={[6, 6, 0, 0]} />
+              
+              <Bar dataKey="consistency" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

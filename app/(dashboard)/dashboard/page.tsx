@@ -42,8 +42,7 @@ export default async function DashboardPage() {
 
   const logs = await db.query.habitLogs.findMany({
     where: eq(habitLogs.userId, userId),
-
-    orderBy: (logs, { desc }) => [desc(logs.completedAt)],
+    orderBy: (habitLogs, { desc }) => [desc(habitLogs.completedAt)],
   });
 
   const userStreaks = await db.query.streaks.findMany({

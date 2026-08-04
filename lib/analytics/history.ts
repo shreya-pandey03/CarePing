@@ -49,10 +49,23 @@ export async function getCompletionHistory(userId: string) {
       streak: streak.currentStreak,
     })),
 
-    heatmapData: logs.map((log) => ({
-      date: log.completedAt.toISOString().split("T")[0],
-      count: 1,
-    })),
+    heatmapData: (() => {
+      const map = new Map<string, number>();
+
+      logs.forEach((log) => {
+        const date = log.completedAt.toISOString().split("T")[0];
+
+        map.set(date, (map.get(date) ?? 0) + 1);
+      });
+
+      return Array.from(map.entries()).map(([date, count]) => ({
+        date,
+        completionRate: Math.min(
+          Math.round((count / Math.max(totalHabits, 1)) * 100),
+          100,
+        ),
+      }));
+    })(),
 
     correlationData: userHabits.map((habit) => {
       const streak = userStreaks.find((s) => s.habitId === habit.id);

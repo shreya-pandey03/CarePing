@@ -41,8 +41,8 @@ export default async function HabitDetailsPage({ params }: PageProps) {
 
   // Get Habit Logs
   const logs = await db.query.habitLogs.findMany({
-    where: eq(habitLogs.habitId, habitId),
-    orderBy: (logs, { desc }) => [desc(logs.completedAt)],
+    where: eq(habitLogs.userId, userId),
+    orderBy: (habitLogs, { desc }) => [desc(habitLogs.completedAt)],
   });
 
   // Get Streak

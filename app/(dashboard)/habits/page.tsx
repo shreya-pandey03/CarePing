@@ -27,6 +27,7 @@ export default async function HabitsPage() {
 
   const logs = await db.query.habitLogs.findMany({
     where: eq(habitLogs.userId, userId),
+    orderBy: (habitLogs, { desc }) => [desc(habitLogs.completedAt)],
   });
 
   const userStreaks = await db.query.streaks.findMany({
