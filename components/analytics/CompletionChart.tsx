@@ -37,7 +37,6 @@ export default function CompletionChart({ data }: CompletionChartProps) {
               <XAxis dataKey="date" />
 
               <YAxis domain={[0, 100]} unit="%" />
-
               <Tooltip />
 
               <Line

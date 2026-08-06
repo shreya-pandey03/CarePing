@@ -37,7 +37,6 @@ export default function ConsistencyChart({ data }: ConsistencyChartProps) {
               <XAxis dataKey="label" />
 
               <YAxis domain={[0, 100]} unit="%" />
-
               <Tooltip />
               
               <Bar dataKey="consistency" radius={[6, 6, 0, 0]} />

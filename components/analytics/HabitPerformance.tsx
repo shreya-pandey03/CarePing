@@ -60,7 +60,6 @@ export default function HabitPerformance({ data }: Props) {
 
               <div>
                 <p className="text-sm text-muted-foreground">Best Streak</p>
-
                 <p className="text-xl font-bold">🏆 {habit.longestStreak}</p>
               </div>
 

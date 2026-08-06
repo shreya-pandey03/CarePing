@@ -16,13 +16,19 @@ import { calculateHabitPerformance } from "@/lib/habit-performance";
 import DailyCompletionChart from "@/components/analytics/DailyCompletionChart";
 import ConsistencyChart from "@/components/analytics/ConsistencyChart";
 import StreakChart from "@/components/analytics/StreakChart";
-import Heatmap from "@/components/analytics/Heatmap";
 import CorrelationChart from "@/components/analytics/CorrelationChart";
 import HabitPerformance from "@/components/analytics/HabitPerformance";
 import { getHeatmap } from "@/actions/analytics/getHeatmap";
 import InsightsCard from "@/components/analytics/InsightsCard";
 import { generateInsights } from "@/lib/insights/generateInsights";
 import AdvancedHeatmap from "@/components/analytics/AdvancedHeatmap";
+import { calculateStreakRisk } from "@/lib/ai/streak-risk";
+import StreakPrediction from "@/components/ai/StreakPrediction";
+import HabitHealth from "@/components/analytics/HabitHealth";
+import { calculateHabitHealth } from "@/lib/ai/habit-health";
+import WeeklyGrade from "@/components/analytics/WeeklyGrade";
+import { calculateWeeklyGrade } from "@/lib/analytics/weekly-grade";
+import { buildAIContext } from "@/lib/ai/context";
 
 export default async function AnalyticsPage() {
   const session = await auth();
@@ -47,11 +53,7 @@ export default async function AnalyticsPage() {
     }),
   ]);
 
-  const insights = generateInsights({
-    habits: userHabits,
-    logs,
-    streaks: userStreaks,
-  });
+  const aiContext = buildAIContext(userHabits, logs, userStreaks);
 
   // Habit Performance Data
 
@@ -67,19 +69,14 @@ export default async function AnalyticsPage() {
 
   const monthlyHistory = await getMonthlyHistory();
 
-  const [
-    dashboardResult,
-    weeklyResult,
-    monthlyResult,
-    historyResult,
-    heatmapResult,
-  ] = await Promise.allSettled([
-    getDashboardAnalytics(userId),
-    getWeeklyAnalytics(userId),
-    getMonthlyAnalytics(userId),
-    getCompletionHistory(userId),
-    getHeatmap(),
-  ]);
+  const [dashboardResult, weeklyResult, monthlyResult, historyResult] =
+    await Promise.allSettled([
+      getDashboardAnalytics(userId),
+      getWeeklyAnalytics(userId),
+      getMonthlyAnalytics(userId),
+      getCompletionHistory(userId),
+      getHeatmap(),
+    ]);
 
   const dashboard =
     dashboardResult.status === "fulfilled"
@@ -122,6 +119,10 @@ export default async function AnalyticsPage() {
           correlationData: [],
         };
 
+  const predictions = calculateStreakRisk(userHabits, logs, userStreaks);
+  const healthScores = calculateHabitHealth(userHabits, logs, userStreaks);
+  const weeklyGrade = calculateWeeklyGrade(userHabits, logs, userStreaks);
+
   return (
     <div className="space-y-8">
       <div>
@@ -152,10 +153,9 @@ export default async function AnalyticsPage() {
         </div>
       </div>
       {/* Daily Charts */}
+      <DailyCompletionChart title="Last 7 Days" data={weeklyHistory} />
 
-      <DailyCompletionChart data={weeklyHistory} />
-
-      <DailyCompletionChart data={monthlyHistory} />
+      <DailyCompletionChart title="Last 30 Days" data={monthlyHistory} />
 
       {/* Consistency */}
 
@@ -176,9 +176,12 @@ export default async function AnalyticsPage() {
       {/* Correlation */}
 
       <CorrelationChart data={history.correlationData} />
-      <InsightsCard insights={insights} />
-      {/* Weekly + Monthly Analytics */}
+      <InsightsCard insights={aiContext.insights} />
+      <StreakPrediction predictions={aiContext.streakPredictions} />
+      <HabitHealth data={aiContext.healthScores} />
+      <WeeklyGrade grade={aiContext.weeklyGrade} />
 
+      {/* Weekly + Monthly Analytics */}
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl border p-6">
           <h2 className="text-xl font-semibold">Weekly Analytics</h2>
@@ -194,13 +197,9 @@ export default async function AnalyticsPage() {
 
         <div className="rounded-xl border p-6">
           <h2 className="text-xl font-semibold">Monthly Analytics</h2>
-
           <p>Completion Rate: {monthly.completionRate}%</p>
-
           <p>Completed: {monthly.completedHabits}</p>
-
           <p>Total: {monthly.totalHabits}</p>
-
           <p>
             {monthly.month}/{monthly.year}
           </p>

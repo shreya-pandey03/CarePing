@@ -8,18 +8,16 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Tooltip,
+  Legend,
 } from "recharts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface CorrelationData {
   habit: string;
-
   completionRate: number;
-
   consistency: number;
-
-  streak: number;
+  streak: number; // actual streak in days
 }
 
 interface Props {
@@ -29,13 +27,15 @@ interface Props {
 export default function CorrelationChart({ data }: Props) {
   const chartData = data.map((item) => ({
     habit: item.habit,
-
     completionRate: item.completionRate,
-
     consistency: item.consistency,
 
-    // convert streak into percentage
-    streak: Math.min(item.streak * 10, 100),
+    // Normalize streak to a 0–100 scale.
+    // 10+ days = 100%.
+    streakStrength: Math.min(item.streak * 10, 100),
+
+    // Keep original value for tooltip if needed later.
+    streakDays: item.streak,
   }));
 
   return (
@@ -58,24 +58,39 @@ export default function CorrelationChart({ data }: Props) {
                 tickFormatter={(value) => `${value}%`}
               />
 
-              <Tooltip formatter={(value) => `${value}%`} />
+              <Tooltip
+                formatter={(value, name, props) => {
+                  const numericValue = Number(value ?? 0);
+
+                  if (name === "Streak Strength") {
+                    return [
+                      `${numericValue}% (${props.payload.streakDays} days)`,
+                      name,
+                    ];
+                  }
+
+                  return [`${numericValue}%`, name];
+                }}
+              />
+
+              <Legend />
 
               <Radar
                 name="Completion"
                 dataKey="completionRate"
-                fillOpacity={0.25}
+                fillOpacity={0.35}
               />
 
               <Radar
                 name="Consistency"
                 dataKey="consistency"
-                fillOpacity={0.2}
+                fillOpacity={0.25}
               />
 
               <Radar
                 name="Streak Strength"
-                dataKey="streak"
-                fillOpacity={0.15}
+                dataKey="streakStrength"
+                fillOpacity={0.2}
               />
             </RadarChart>
           </ResponsiveContainer>
