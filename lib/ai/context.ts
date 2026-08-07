@@ -7,23 +7,14 @@ import { predictStreakRisk } from "@/lib/analytics/streak-prediction";
 
 export interface AIContext {
   generatedAt: Date;
-
   completionRate: number;
-
   completedToday: number;
-
   totalHabits: number;
-
   weeklyGrade: ReturnType<typeof calculateWeeklyGrade>;
-
   healthScores: ReturnType<typeof calculateHabitHealth>;
-
   streakPredictions: ReturnType<typeof predictStreakRisk>;
-
   insights: string[];
-
   strongestHabit: string | null;
-
   weakestHabit: string | null;
 }
 
@@ -32,9 +23,9 @@ export function buildAIContext(
   logs: HabitLog[],
   streaks: Streak[],
 ): AIContext {
-  //----------------------------------------
+
   // Dashboard numbers
-  //----------------------------------------
+
 
   const today = new Date();
 
@@ -51,9 +42,9 @@ export function buildAIContext(
   const completionRate =
     totalHabits === 0 ? 0 : Math.round((completedToday / totalHabits) * 100);
 
-  //----------------------------------------
+
   // Analytics
-  //----------------------------------------
+ 
 
   const weeklyGrade = calculateWeeklyGrade(habits, logs, streaks);
 
@@ -67,9 +58,9 @@ export function buildAIContext(
     streaks,
   });
 
-  //----------------------------------------
+
   // Strongest / weakest
-  //----------------------------------------
+ 
 
   const sorted = [...healthScores].sort((a, b) => b.score - a.score);
 
@@ -78,27 +69,18 @@ export function buildAIContext(
   const weakestHabit =
     sorted.length > 0 ? sorted[sorted.length - 1].title : null;
 
-  //----------------------------------------
+ 
 
   return {
     generatedAt: new Date(),
-
     completionRate,
-
     completedToday,
-
     totalHabits,
-
     weeklyGrade,
-
     healthScores,
-
     streakPredictions: predictions,
-
     insights,
-
     strongestHabit,
-
     weakestHabit,
   };
 }

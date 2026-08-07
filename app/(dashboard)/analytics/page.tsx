@@ -185,13 +185,9 @@ export default async function AnalyticsPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl border p-6">
           <h2 className="text-xl font-semibold">Weekly Analytics</h2>
-
           <p>Completion Rate: {weekly.completionRate}%</p>
-
           <p>Completed: {weekly.completedHabits}</p>
-
           <p>Total: {weekly.totalHabits}</p>
-
           <p>{weekly.currentWeek}</p>
         </div>
 
