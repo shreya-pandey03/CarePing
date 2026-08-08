@@ -9,6 +9,7 @@ import { habitLogs, habits, streaks } from "@/drizzle/schema";
 import { publishRealtimeEvent } from "@/lib/realtime/publisher";
 import { CHANNELS } from "@/lib/realtime/channels";
 import { analyticsQueue } from "@/jobs/queues/analytics.queue";
+import { redis } from "@/lib/redis";
 
 function isSameDay(date1: Date, date2: Date) {
   return (
@@ -131,14 +132,22 @@ export async function completeHabit(habitId: string) {
 
     const cacheKey = `dashboard:${userId}`;
 
-    // try {
-    //   await redis.del(cacheKey);
-    // } catch (error) {
-    //   console.error("Redis cache clear failed:", error);
-    // }
+    const aiReportCacheKey = `ai:report:${userId}`;
+
+    try {
+      await Promise.all([
+        // Dashboard cache (enable if you're caching dashboard)
+        // redis.del(dashboardCacheKey),
+
+        // AI report cache
+        redis.del(aiReportCacheKey),
+      ]);
+    } catch (error) {
+      console.error("Failed to clear caches:", error);
+    }
 
     await analyticsQueue.add("update-analytics", {
-      userId: session.user.id,
+      userId,
       habitId,
     });
 

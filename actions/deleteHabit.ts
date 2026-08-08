@@ -9,6 +9,7 @@ import { habits, habitLogs, streaks } from "@/drizzle/schema";
 import { aiQueue, recommendationQueue } from "@/jobs/queues";
 import { publishRealtimeEvent } from "@/lib/realtime/publisher";
 import { CHANNELS } from "@/lib/realtime/channels";
+import { redis } from "@/lib/redis";
 
 export async function deleteHabit(habitId: string) {
   const session = await auth();
@@ -80,6 +81,12 @@ export async function deleteHabit(habitId: string) {
       ]);
     } catch (queueError) {
       console.error("Queue Error:", queueError);
+    }
+
+    try {
+      await redis.del(`ai:report:${session.user.id}`);
+    } catch (error) {
+      console.error("Failed to clear AI report cache:", error);
     }
 
     revalidatePath("/dashboard");

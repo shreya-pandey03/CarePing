@@ -7,9 +7,9 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { habits } from "@/drizzle/schema";
-import { emitHabitUpdated } from "@/lib/socket/emitters";
 import { publishRealtimeEvent } from "@/lib/realtime/publisher";
 import { CHANNELS } from "@/lib/realtime/channels";
+import { redis } from "@/lib/redis";
 
 const updateHabitSchema = z.object({
   id: z.string(),
@@ -92,6 +92,12 @@ export async function updateHabit(input: UpdateHabitInput) {
       type: CHANNELS.HABIT_UPDATED,
       payload: updateHabit,
     });
+
+    try {
+      await redis.del(`ai:report:${session.user.id}`);
+    } catch (error) {
+      console.error("Failed to clear AI report cache:", error);
+    }
 
     revalidatePath("/dashboard");
     revalidatePath("/habits");

@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { habits, streaks } from "@/drizzle/schema";
 import { publishRealtimeEvent } from "@/lib/realtime/publisher";
 import { CHANNELS } from "@/lib/realtime/channels";
+import { redis } from "@/lib/redis";
 
 const createHabitSchema = z.object({
   title: z.string().min(1),
@@ -72,6 +73,11 @@ export async function createHabit(input: CreateHabitInput) {
       payload: habitId,
     });
 
+    try {
+  await redis.del(`ai:report:${session.user.id}`);
+} catch (error) {
+  console.error("Failed to clear AI report cache:", error);
+}
     revalidatePath("/dashboard");
     revalidatePath("/habits");
 
