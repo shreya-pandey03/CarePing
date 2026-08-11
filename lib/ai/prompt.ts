@@ -5,7 +5,6 @@ export function buildCoachPrompt(context: AIContext): string {
 You are an expert AI Habit Coach.
 
 Your goal is to help users build long-term habits.
-
 Never invent statistics.
 
 Only use the provided analytics.
@@ -42,7 +41,7 @@ ${context.healthScores.map((h) => `${h.title}: ${h.score}/100`).join("\n")}
 Risk Prediction
 
 ${context.streakPredictions
-  .map((h) => `${h.habit}: ${h.risk} (${h.score}/100)`)
+  .map((h) => `${h.title}: ${h.riskLevel} (${h.riskScore}/100)`)
   .join("\n")}
 
 --------------------------------

@@ -7,12 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 interface Prediction {
-  habit: string;
-
-  risk: "low" | "medium" | "high";
-
-  score: number;
-
+  habitId: string;
+  title: string;
+  riskLevel: "low" | "medium" | "high";
+  riskScore: number;
   recommendation: string;
 }
 
@@ -23,10 +21,10 @@ interface StreakPredictionProps {
 export default function StreakPrediction({
   predictions,
 }: StreakPredictionProps) {
-  const getBadge = (risk: Prediction["risk"]) => {
+  const getBadge = (risk: Prediction["riskLevel"]) => {
     switch (risk) {
       case "low":
-        return <Badge>Low Risk</Badge>;
+        return <Badge variant="secondary">Low Risk</Badge>;
 
       case "medium":
         return <Badge>Medium Risk</Badge>;
@@ -36,7 +34,7 @@ export default function StreakPrediction({
     }
   };
 
-  const getIcon = (risk: Prediction["risk"]) => {
+  const getIcon = (risk: Prediction["riskLevel"]) => {
     switch (risk) {
       case "low":
         return <CheckCircle2 className="h-5 w-5" />;
@@ -63,31 +61,34 @@ export default function StreakPrediction({
         ) : (
           predictions.map((prediction) => (
             <div
-              key={prediction.habit}
-              className="rounded-xl border p-4 space-y-4"
+              key={prediction.habitId}
+              className="space-y-4 rounded-xl border p-4"
             >
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  {getIcon(prediction.risk)}
+                  {getIcon(prediction.riskLevel)}
 
-                  <h3 className="font-semibold">{prediction.habit}</h3>
+                  <h3 className="font-semibold">{prediction.title}</h3>
                 </div>
 
-                {getBadge(prediction.risk)}
+                {getBadge(prediction.riskLevel)}
               </div>
 
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Risk Score</span>
 
-                  <span className="font-semibold">{prediction.score}%</span>
+                  <span className="font-semibold">{prediction.riskScore}%</span>
                 </div>
 
                 <div className="h-2 rounded-full bg-muted">
                   <div
-                    className="h-2 rounded-full"
+                    className="h-2 rounded-full bg-primary transition-all"
                     style={{
-                      width: `${prediction.score}%`,
+                      width: `${Math.min(
+                        Math.max(prediction.riskScore, 0),
+                        100,
+                      )}%`,
                     }}
                   />
                 </div>

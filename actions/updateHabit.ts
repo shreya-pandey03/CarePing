@@ -13,11 +13,8 @@ import { redis } from "@/lib/redis";
 
 const updateHabitSchema = z.object({
   id: z.string(),
-
   title: z.string().min(3).max(100),
-
   description: z.string().optional().nullable(),
-
   category: z.enum([
     "custom",
     "health",
@@ -30,13 +27,9 @@ const updateHabitSchema = z.object({
     "mindfulness",
     "nutrition",
   ]),
-
   frequency: z.enum(["daily", "weekly", "monthly"]),
-
   targetDays: z.number().min(1).max(7),
-
   reminderTime: z.string().optional().nullable(),
-
   active: z.boolean(),
 });
 

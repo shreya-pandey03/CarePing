@@ -74,7 +74,6 @@ export default function AICoachCard({
 
           <p>{report.nextGoal}</p>
         </div>
-
         <div className="rounded-lg bg-muted p-4">
           <p>{report.motivation}</p>
         </div>

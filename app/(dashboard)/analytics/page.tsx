@@ -29,6 +29,11 @@ import { calculateHabitHealth } from "@/lib/ai/habit-health";
 import WeeklyGrade from "@/components/analytics/WeeklyGrade";
 import { calculateWeeklyGrade } from "@/lib/analytics/weekly-grade";
 import { buildAIContext } from "@/lib/ai/context";
+import { calculateHabitScore } from "@/lib/habit-score/calculateHabitScore";
+import { calculateOverallHabitScore } from "@/lib/habit-score/calculateOverallHabitScore";
+import HabitScoreCard from "@/components/analytics/HabitScoreCard";
+import { getWeeklyGrade } from "@/lib/weekly-grade/getWeeklyGrade";
+import WeeklyGradeCard from "@/components/analytics/WeeklyGradeCard";
 
 export default async function AnalyticsPage() {
   const session = await auth();
@@ -61,6 +66,38 @@ export default async function AnalyticsPage() {
     const streak = userStreaks.find((s) => s.habitId === habit.id);
 
     return calculateHabitPerformance(habit, logs, streak);
+  });
+
+  const overallScore = habitPerformance.length
+    ? Math.round(
+        habitPerformance.reduce((sum, habit) => {
+          return (
+            sum +
+            calculateHabitScore({
+              completionRate: habit.completionRate,
+              currentStreak: habit.currentStreak,
+              longestStreak: habit.longestStreak,
+              totalCompleted: habit.totalCompleted,
+            }).score
+          );
+        }, 0) / habitPerformance.length,
+      )
+    : 0;
+
+  const habitScore = calculateHabitScore({
+    completionRate: overallScore,
+    currentStreak: Math.max(
+      ...habitPerformance.map((habit) => habit.currentStreak),
+      0,
+    ),
+    longestStreak: Math.max(
+      ...habitPerformance.map((habit) => habit.longestStreak),
+      0,
+    ),
+    totalCompleted: habitPerformance.reduce(
+      (sum, habit) => sum + habit.totalCompleted,
+      0,
+    ),
   });
 
   // Chart Data
@@ -174,13 +211,20 @@ export default async function AnalyticsPage() {
       <AdvancedHeatmap data={history.heatmapData} />
 
       {/* Correlation */}
-
       <CorrelationChart data={history.correlationData} />
       <InsightsCard insights={aiContext.insights} />
       <StreakPrediction predictions={aiContext.streakPredictions} />
-      <HabitHealth data={aiContext.healthScores} />
-      <WeeklyGrade grade={aiContext.weeklyGrade} />
-
+      <HabitHealth
+        data={aiContext.healthScores.map((h: any) => ({
+          // ensure required properties for HabitHealth component
+          ...h,
+          completedToday: h.completedToday ?? 0,
+        }))}
+      />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <HabitScoreCard score={habitScore} />
+        <WeeklyGrade grade={aiContext.weeklyGrade} />
+      </div>
       {/* Weekly + Monthly Analytics */}
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl border p-6">

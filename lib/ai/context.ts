@@ -1,19 +1,33 @@
 import { Habit, HabitLog, Streak } from "@/drizzle/schema";
 
 import { calculateWeeklyGrade } from "@/lib/analytics/weekly-grade";
-import { calculateHabitHealth } from "@/lib/analytics/habit-health";
 import { generateInsights } from "@/lib/insights/generateInsights";
 import { predictStreakRisk } from "@/lib/analytics/streak-prediction";
+import { calculateHabitHealth } from "@/lib/analytics/habit-health";
 
 export interface AIContext {
   generatedAt: Date;
+
   completionRate: number;
   completedToday: number;
   totalHabits: number;
+
   weeklyGrade: ReturnType<typeof calculateWeeklyGrade>;
-  healthScores: ReturnType<typeof calculateHabitHealth>;
-  streakPredictions: ReturnType<typeof predictStreakRisk>;
+
+  healthScores: Array<
+    ReturnType<typeof calculateHabitHealth> & {
+      title: string;
+    }
+  >;
+
+  streakPredictions: Array<
+    ReturnType<typeof predictStreakRisk> & {
+      title: string;
+    }
+  >;
+
   insights: string[];
+
   strongestHabit: string | null;
   weakestHabit: string | null;
 }
@@ -23,9 +37,9 @@ export function buildAIContext(
   logs: HabitLog[],
   streaks: Streak[],
 ): AIContext {
-
+  // ----------------------------------------
   // Dashboard numbers
-
+  // ----------------------------------------
 
   const today = new Date();
 
@@ -42,15 +56,45 @@ export function buildAIContext(
   const completionRate =
     totalHabits === 0 ? 0 : Math.round((completedToday / totalHabits) * 100);
 
-
-  // Analytics
- 
+  // ----------------------------------------
+  // Weekly analytics
+  // ----------------------------------------
 
   const weeklyGrade = calculateWeeklyGrade(habits, logs, streaks);
 
-  const healthScores = calculateHabitHealth(habits, logs, streaks);
+  // ----------------------------------------
+  // Habit health
+  // ----------------------------------------
 
-  const predictions = predictStreakRisk(habits, logs, streaks);
+  const healthScores = habits.map((habit) => {
+    const streak = streaks.find((streak) => streak.habitId === habit.id);
+
+    const health = calculateHabitHealth(habit, logs, streak);
+
+    return {
+      ...health,
+      title: habit.title,
+    };
+  });
+
+  // ----------------------------------------
+  // Streak predictions
+  // ----------------------------------------
+
+  const streakPredictions = habits.map((habit) => {
+    const streak = streaks.find((streak) => streak.habitId === habit.id);
+
+    const prediction = predictStreakRisk(habit, logs, streak);
+
+    return {
+      ...prediction,
+      title: habit.title,
+    };
+  });
+
+  // ----------------------------------------
+  // AI insights
+  // ----------------------------------------
 
   const insights = generateInsights({
     habits,
@@ -58,9 +102,9 @@ export function buildAIContext(
     streaks,
   });
 
-
-  // Strongest / weakest
- 
+  // ----------------------------------------
+  // Strongest / weakest habit
+  // ----------------------------------------
 
   const sorted = [...healthScores].sort((a, b) => b.score - a.score);
 
@@ -69,17 +113,25 @@ export function buildAIContext(
   const weakestHabit =
     sorted.length > 0 ? sorted[sorted.length - 1].title : null;
 
- 
+  // ----------------------------------------
+  // Final AI context
+  // ----------------------------------------
 
   return {
     generatedAt: new Date(),
+
     completionRate,
     completedToday,
     totalHabits,
+
     weeklyGrade,
+
     healthScores,
-    streakPredictions: predictions,
+
+    streakPredictions,
+
     insights,
+
     strongestHabit,
     weakestHabit,
   };

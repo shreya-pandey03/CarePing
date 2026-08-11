@@ -8,6 +8,5 @@ export interface AICoachResponse {
   recommendations: string[];
 
   motivation: string;
-
   nextGoal: string;
 }

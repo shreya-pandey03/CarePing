@@ -37,7 +37,6 @@ export async function completeHabit(habitId: string) {
   }
 
   const userId = session.user.id;
-
   try {
     const habit = await db.query.habits.findFirst({
       where: and(eq(habits.id, habitId), eq(habits.userId, userId)),
