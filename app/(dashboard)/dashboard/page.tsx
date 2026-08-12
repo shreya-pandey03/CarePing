@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { eq, desc } from "drizzle-orm";
 
 import { db } from "@/lib/db";
-
 import {
   habits,
   habitLogs,
@@ -11,19 +10,17 @@ import {
   weeklyReports,
   notifications,
 } from "@/drizzle/schema";
-
 import DashboardStats from "@/components/dashboard/DashboardStats";
 import ProgressCards from "@/components/dashboard/ProgressCards";
 import WeeklySummary from "@/components/dashboard/WeeklySummary";
 import HabitHeatmap from "@/components/dashboard/HabitHeatmap";
 import RecentActivity from "@/components/dashboard/RecentActivity";
-
 import AIInsightCard from "@/components/ai/AIInsightCard";
 import MotivationCard from "@/components/ai/MotivationCard";
 import StreakPrediction from "@/components/ai/StreakPrediction";
-
 import { calculateCompletionRate, calculateConsistency } from "@/lib/analytics";
 import DashboardRealtime from "@/components/dashboard/DashboardRealtime";
+import { predictStreakRisk } from "@/lib/analytics/streak-prediction";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -115,43 +112,53 @@ export default async function DashboardPage() {
 
   // Streak Prediction
 
-  type Prediction = {
-    habit: string;
-    risk: "low" | "medium" | "high";
-    score: number;
-    recommendation: string;
-  };
+  // type Prediction = {
+  //   habit: string;
+  //   risk: "low" | "medium" | "high";
+  //   score: number;
+  //   recommendation: string;
+  // };
 
-  const predictions: Prediction[] = userHabits.map((habit) => {
+  // const predictions: Prediction[] = userHabits.map((habit) => {
+  //   const streak = userStreaks.find(
+  //     (s) => s.habitId === habit.id,
+  //   );
+
+  //   const current = streak?.currentStreak ?? 0;
+
+  //   let risk: "low" | "medium" | "high";
+  //   let score: number;
+
+  //   if (current >= 14) {
+  //     risk = "low";
+  //     score = 20;
+  //   } else if (current >= 5) {
+  //     risk = "medium";
+  //     score = 55;
+  //   } else {
+  //     risk = "high";
+  //     score = 85;
+  //   }
+
+  //   return {
+  //     habit: habit.title,
+  //     risk,
+  //     score,
+  //     recommendation:
+  //       current >= 14
+  //         ? "Excellent consistency. Keep protecting this streak."
+  //         : current >= 5
+  //           ? "Good progress. Stay consistent to strengthen this habit."
+  //           : "Complete this habit today to build momentum.",
+  //   };
+  // });
+
+  // Streak Prediction
+
+  const predictions = userHabits.map((habit) => {
     const streak = userStreaks.find((s) => s.habitId === habit.id);
 
-    const current = streak?.currentStreak ?? 0;
-
-    let risk: "low" | "medium" | "high";
-    let score: number;
-
-    if (current >= 14) {
-      risk = "low";
-      score = 20;
-    } else if (current >= 5) {
-      risk = "medium";
-      score = 55;
-    } else {
-      risk = "high";
-      score = 85;
-    }
-
-    return {
-      habit: habit.title,
-      risk,
-      score,
-      recommendation:
-        current >= 14
-          ? "Excellent consistency. Keep protecting this streak."
-          : current >= 5
-            ? "Good progress. Stay consistent to strengthen this habit."
-            : "Complete this habit today to build momentum.",
-    };
+    return predictStreakRisk(habit, logs, streak);
   });
 
   return (

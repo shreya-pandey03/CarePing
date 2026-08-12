@@ -6,13 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Badge } from "@/components/ui/badge";
 
-interface Prediction {
-  habitId: string;
-  title: string;
-  riskLevel: "low" | "medium" | "high";
-  riskScore: number;
-  recommendation: string;
-}
+import type { StreakPrediction as Prediction } from "@/lib/analytics/streak-prediction";
 
 interface StreakPredictionProps {
   predictions: Prediction[];
@@ -24,7 +18,7 @@ export default function StreakPrediction({
   const getBadge = (risk: Prediction["riskLevel"]) => {
     switch (risk) {
       case "low":
-        return <Badge variant="secondary">Low Risk</Badge>;
+        return <Badge>Low Risk</Badge>;
 
       case "medium":
         return <Badge>Medium Risk</Badge>;
@@ -68,7 +62,7 @@ export default function StreakPrediction({
                 <div className="flex items-center gap-2">
                   {getIcon(prediction.riskLevel)}
 
-                  <h3 className="font-semibold">{prediction.title}</h3>
+                  <h3 className="font-semibold">{prediction.habitId}</h3>
                 </div>
 
                 {getBadge(prediction.riskLevel)}
@@ -83,18 +77,24 @@ export default function StreakPrediction({
 
                 <div className="h-2 rounded-full bg-muted">
                   <div
-                    className="h-2 rounded-full bg-primary transition-all"
+                    className="h-2 rounded-full"
                     style={{
-                      width: `${Math.min(
-                        Math.max(prediction.riskScore, 0),
-                        100,
-                      )}%`,
+                      width: `${prediction.riskScore}%`,
                     }}
                   />
                 </div>
 
                 <p className="text-sm text-muted-foreground">
                   {prediction.recommendation}
+                </p>
+
+                <p className="text-xs text-muted-foreground">
+                  Predicted break: {prediction.predictedBreakDays} day
+                  {prediction.predictedBreakDays !== 1 ? "s" : ""}
+                </p>
+
+                <p className="text-xs text-muted-foreground">
+                  Confidence: {Math.round(prediction.confidence * 100)}%
                 </p>
               </div>
             </div>
