@@ -9,20 +9,32 @@ export type HabitHealthStatus = "excellent" | "good" | "warning" | "critical";
 
 export type HabitHealth = {
   habitId: string;
+  habitTitle: string;
   score: number;
   status: HabitHealthStatus;
   completionRate: number;
   currentStreak: number;
   totalCompletions: number;
   daysSinceLastCompletion: number | null;
+  completedToday: boolean;
   recommendation: string;
 };
+
+function isSameDay(date1: Date, date2: Date) {
+  return (
+    date1.getFullYear() === date2.getFullYear() &&
+    date1.getMonth() === date2.getMonth() &&
+    date1.getDate() === date2.getDate()
+  );
+}
 
 export function calculateHabitHealth(
   habit: Habit,
   logs: HabitLog[],
   streak?: Streak,
 ): HabitHealth {
+  /* HABIT LOGS*/
+
   const habitLogs = logs
     .filter((log) => log.habitId === habit.id)
     .sort(
@@ -31,7 +43,18 @@ export function calculateHabitHealth(
     );
 
   const totalCompletions = habitLogs.length;
+
   const currentStreak = streak?.currentStreak ?? 0;
+
+  const today = new Date();
+
+  /*COMPLETED TODAY*/
+
+  const completedToday = habitLogs.some((log) =>
+    isSameDay(new Date(log.completedAt), today),
+  );
+
+  /* LAST COMPLETION*/
 
   const latestLog = habitLogs[0];
 
@@ -39,39 +62,93 @@ export function calculateHabitHealth(
     ? Math.max(
         0,
         Math.floor(
-          (Date.now() - new Date(latestLog.completedAt).getTime()) /
+          (today.getTime() - new Date(latestLog.completedAt).getTime()) /
             (1000 * 60 * 60 * 24),
         ),
       )
     : null;
 
   /*
-   * Basic health calculation.
-   *
-   * This is intentionally deterministic.
-   * Later this can be enhanced with AI predictions.
+   * COMPLETION RATE
+   * Calculate based on days since habit creation.
+   * Example:
+   * Habit created 10 days ago
+   * Completed 7 times
+   * Completion = 70%
    */
 
-  const completionScore = Math.min(totalCompletions * 5, 40);
+  const habitCreatedAt = new Date(habit.createdAt);
 
-  const streakScore = Math.min(currentStreak * 2, 30);
+  const daysSinceCreated = Math.max(
+    1,
+    Math.floor(
+      (today.getTime() - habitCreatedAt.getTime()) / (1000 * 60 * 60 * 24),
+    ) + 1,
+  );
 
-  let recencyScore = 0;
+  const completionRate =
+    totalCompletions === 0
+      ? 0
+      : Math.min(100, Math.round((totalCompletions / daysSinceCreated) * 100));
 
-  if (daysSinceLastCompletion === null) {
-    recencyScore = 0;
-  } else if (daysSinceLastCompletion === 0) {
-    recencyScore = 30;
-  } else if (daysSinceLastCompletion === 1) {
-    recencyScore = 20;
-  } else if (daysSinceLastCompletion === 2) {
-    recencyScore = 10;
+  /*
+   * HEALTH SCORE
+   * Completion       = 50 points
+   * Consistency      = 20 points
+   * Current streak   = 20 points
+   * Today status     = 10 points
+   * Total             = 100
+   */
+
+  const completionScore = completionRate * 0.5;
+
+  /*
+   * Recent consistency.
+   *
+   * Look at the last 7 days.
+   */
+
+  let recentCompletions = 0;
+
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(today);
+
+    date.setHours(0, 0, 0, 0);
+
+    date.setDate(today.getDate() - i);
+
+    const completedThatDay = habitLogs.some((log) =>
+      isSameDay(new Date(log.completedAt), date),
+    );
+
+    if (completedThatDay) {
+      recentCompletions++;
+    }
   }
+
+  const consistencyRate = Math.round((recentCompletions / 7) * 100);
+
+  const consistencyScore = consistencyRate * 0.2;
+
+  /* STREAK SCORE*/
+
+  const streakScore = Math.min(currentStreak * 2, 20);
+
+  /*TODAY SCORE*/
+
+  const todayScore = completedToday ? 10 : 0;
+
+  /*FINAL HEALTH SCORE*/
 
   const score = Math.max(
     0,
-    Math.min(100, completionScore + streakScore + recencyScore),
+    Math.min(
+      100,
+      Math.round(completionScore + consistencyScore + streakScore + todayScore),
+    ),
   );
+
+  /* HEALTH STATUS*/
 
   const status: HabitHealthStatus =
     score >= 80
@@ -82,50 +159,46 @@ export function calculateHabitHealth(
           ? "warning"
           : "critical";
 
-  const completionRate =
-    totalCompletions === 0
-      ? 0
-      : Math.min(
-          100,
-          Math.round(
-            (totalCompletions /
-              Math.max(currentStreak || 1, totalCompletions)) *
-              100,
-          ),
-        );
+  /*RECOMMENDATION*/
 
   let recommendation: string;
 
-  switch (status) {
-    case "excellent":
-      recommendation = "Excellent consistency. Keep your current routine.";
+  if (!completedToday) {
+    recommendation = "Complete this habit today to keep your momentum going.";
+  } else {
+    switch (status) {
+      case "excellent":
+        recommendation = "Excellent consistency. Keep your current routine.";
+        break;
 
-      break;
+      case "good":
+        recommendation = "Your habit is progressing well. Stay consistent.";
+        break;
 
-    case "good":
-      recommendation = "Your habit is progressing well. Stay consistent.";
+      case "warning":
+        recommendation =
+          "Your consistency is slipping. Try maintaining your routine.";
+        break;
 
-      break;
-
-    case "warning":
-      recommendation =
-        "Your consistency is slipping. Try completing this habit today.";
-
-      break;
-
-    default:
-      recommendation =
-        "This habit needs attention. Restart with a small achievable goal.";
+      default:
+        recommendation =
+          "This habit needs attention. Restart with a small achievable goal.";
+    }
   }
+
+  /*
+   * RETURN*/
 
   return {
     habitId: habit.id,
+    habitTitle: habit.title,
     score,
     status,
     completionRate,
     currentStreak,
     totalCompletions,
     daysSinceLastCompletion,
+    completedToday,
     recommendation,
   };
 }

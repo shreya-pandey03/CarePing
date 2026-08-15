@@ -1,6 +1,6 @@
 import type { HabitScore } from "./types";
 
-interface HabitScoreInput {
+export interface HabitScoreInput {
   completionRate: number;
   currentStreak: number;
   longestStreak: number;

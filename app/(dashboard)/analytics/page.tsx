@@ -34,6 +34,7 @@ import { calculateOverallHabitScore } from "@/lib/habit-score/calculateOverallHa
 import HabitScoreCard from "@/components/analytics/HabitScoreCard";
 import { getWeeklyGrade } from "@/lib/weekly-grade/getWeeklyGrade";
 import WeeklyGradeCard from "@/components/analytics/WeeklyGradeCard";
+import HabitScore from "@/components/analytics/HabitScore";
 
 export default async function AnalyticsPage() {
   const session = await auth();
@@ -66,38 +67,6 @@ export default async function AnalyticsPage() {
     const streak = userStreaks.find((s) => s.habitId === habit.id);
 
     return calculateHabitPerformance(habit, logs, streak);
-  });
-
-  const overallScore = habitPerformance.length
-    ? Math.round(
-        habitPerformance.reduce((sum, habit) => {
-          return (
-            sum +
-            calculateHabitScore({
-              completionRate: habit.completionRate,
-              currentStreak: habit.currentStreak,
-              longestStreak: habit.longestStreak,
-              totalCompleted: habit.totalCompleted,
-            }).score
-          );
-        }, 0) / habitPerformance.length,
-      )
-    : 0;
-
-  const habitScore = calculateHabitScore({
-    completionRate: overallScore,
-    currentStreak: Math.max(
-      ...habitPerformance.map((habit) => habit.currentStreak),
-      0,
-    ),
-    longestStreak: Math.max(
-      ...habitPerformance.map((habit) => habit.longestStreak),
-      0,
-    ),
-    totalCompleted: habitPerformance.reduce(
-      (sum, habit) => sum + habit.totalCompleted,
-      0,
-    ),
   });
 
   // Chart Data
@@ -156,9 +125,33 @@ export default async function AnalyticsPage() {
           correlationData: [],
         };
 
-  const predictions = calculateStreakRisk(userHabits, logs, userStreaks);
-  const healthScores = calculateHabitHealth(userHabits, logs, userStreaks);
-  const weeklyGrade = calculateWeeklyGrade(userHabits, logs, userStreaks);
+  const totalHabits = userHabits.length;
+
+  const completedToday = logs.filter(
+    (log) => log.completedAt.toDateString() === new Date().toDateString(),
+  ).length;
+
+  const completionRate =
+    totalHabits > 0 ? Math.round((completedToday / totalHabits) * 100) : 0;
+
+  const currentStreak =
+    userStreaks.length > 0
+      ? Math.max(...userStreaks.map((streak) => streak.currentStreak))
+      : 0;
+
+  const longestStreak =
+    userStreaks.length > 0
+      ? Math.max(...userStreaks.map((streak) => streak.longestStreak))
+      : 0;
+
+  const totalCompleted = logs.length;
+
+  const habitScore = calculateHabitScore({
+    completionRate,
+    currentStreak,
+    longestStreak,
+    totalCompleted,
+  });
 
   return (
     <div className="space-y-8">
@@ -205,7 +198,7 @@ export default async function AnalyticsPage() {
       {/* Habit Performance */}
 
       <HabitPerformance data={habitPerformance} />
-
+      <HabitScore data={habitScore as any} />
       {/* Heatmap */}
 
       <AdvancedHeatmap data={history.heatmapData} />
