@@ -5,135 +5,208 @@ type Habit = InferSelectModel<typeof habits>;
 type HabitLog = InferSelectModel<typeof habitLogs>;
 type Streak = InferSelectModel<typeof streaks>;
 
-export type HabitScore = {
+export type HabitScoreResult = {
   score: number;
   completionScore: number;
   consistencyScore: number;
   streakScore: number;
-  status: "Excellent" | "Good" | "Fair" | "Needs Attention";
+  status: "excellent" | "good" | "fair" | "needs-attention";
+  label: string;
 };
 
-function getDateKey(date: Date) {
-  return date.toISOString().split("T")[0];
-}
-
+/**
+ * Calculate the overall score of a single habit.
+ *
+ * Score breakdown:
+ *
+ * Completion    -> 50 points
+ * Consistency   -> 30 points
+ * Streak        -> 20 points
+ *
+ * Total         -> 100 points
+ */
 export function calculateHabitScore(
-  habitsList: Habit[],
+  habit: Habit,
   logs: HabitLog[],
-  streaksList: Streak[],
-): HabitScore {
-  if (habitsList.length === 0) {
-    return {
-      score: 0,
-      completionScore: 0,
-      consistencyScore: 0,
-      streakScore: 0,
-      status: "Needs Attention",
-    };
-  }
-
-  /*
-   * 1. COMPLETION SCORE
-   * Measures how often habits were completed during the
-   * available tracking period.
-   */
-
-  const activeHabits = habitsList.filter((habit) => habit.active);
-
-  const totalHabits =
-    activeHabits.length > 0 ? activeHabits.length : habitsList.length;
-
-  const totalCompletions = logs.filter((log) => log.completed).length;
-
-  /*
-   * Use the number of tracked days rather than today's
-   * completion so the score represents long-term behavior.
-   */
-
-  const uniqueDates = new Set(
-    logs
-      .filter((log) => log.completed)
-      .map((log) => getDateKey(new Date(log.completedAt))),
+  streak?: Streak,
+): HabitScoreResult {
+  const habitLogs = logs.filter(
+    (log) => log.habitId === habit.id && log.completed,
   );
 
-  const trackedDays = Math.max(uniqueDates.size, 1);
+  const totalCompletions = habitLogs.length;
 
-  const possibleCompletions = Math.max(totalHabits * trackedDays, 1);
+  /**
+   * -------------------------
+   * 1. COMPLETION SCORE
+   * -------------------------
+   *
+   * We use the last 30 days as the primary measurement.
+   */
+  const now = new Date();
+
+  const thirtyDaysAgo = new Date(now);
+  thirtyDaysAgo.setDate(now.getDate() - 29);
+  thirtyDaysAgo.setHours(0, 0, 0, 0);
+
+  const recentLogs = habitLogs.filter((log) => {
+    const date = new Date(log.completedAt);
+
+    return date >= thirtyDaysAgo && date <= now;
+  });
+
+  /**
+   * For a daily habit:
+   * 30 possible days.
+   *
+   * For weekly/monthly habits we still use the same
+   * recent activity window, but avoid allowing the
+   * denominator to become unrealistically large.
+   */
+  let expectedCompletions = 30;
+
+  if (habit.frequency === "weekly") {
+    expectedCompletions = 4;
+  }
+
+  if (habit.frequency === "monthly") {
+    expectedCompletions = 1;
+  }
 
   const completionRate = Math.min(
     100,
-    Math.round((totalCompletions / possibleCompletions) * 100),
+    Math.round((recentLogs.length / expectedCompletions) * 100),
   );
 
-  const completionScore = completionRate;
+  const completionScore = Math.round(
+    (completionRate / 100) * 50,
+  );
 
-  /*
+  /**
+   * -------------------------
    * 2. CONSISTENCY SCORE
-   * Measures how regularly the user completes habits.
-   * Instead of simply counting total completions, we look
-   * at how many tracked days contained activity.
+   * -------------------------
+   *
+   * We look at the spacing between completions.
+   *
+   * A habit completed regularly gets a higher score.
    */
-
-  const consistencyRate = Math.min(
-    100,
-    Math.round((uniqueDates.size / trackedDays) * 100),
+  const sortedLogs = [...habitLogs].sort(
+    (a, b) =>
+      new Date(a.completedAt).getTime() -
+      new Date(b.completedAt).getTime(),
   );
 
-  /*
-   * The calculation above naturally becomes 100 when all
-   * tracked days contain activity.
-   *
-   * We slightly normalize it so a very small amount of
-   * history does not immediately produce a perfect score.
-   */
+  let consistencyRate = 0;
 
-  const historyFactor = Math.min(uniqueDates.size / 14, 1);
+  if (sortedLogs.length >= 2) {
+    const intervals: number[] = [];
+
+    for (let i = 1; i < sortedLogs.length; i++) {
+      const previous = new Date(sortedLogs[i - 1].completedAt);
+      const current = new Date(sortedLogs[i].completedAt);
+
+      const days =
+        (current.getTime() - previous.getTime()) /
+        (1000 * 60 * 60 * 24);
+
+      intervals.push(days);
+    }
+
+    const averageInterval =
+      intervals.reduce((sum, value) => sum + value, 0) /
+      intervals.length;
+
+    /**
+     * Ideal interval:
+     *
+     * daily   -> 1 day
+     * weekly  -> 7 days
+     * monthly -> 30 days
+     */
+    const idealInterval =
+      habit.frequency === "daily"
+        ? 1
+        : habit.frequency === "weekly"
+          ? 7
+          : 30;
+
+    const deviation = Math.abs(
+      averageInterval - idealInterval,
+    );
+
+    consistencyRate = Math.max(
+      0,
+      Math.min(
+        100,
+        Math.round(100 - (deviation / idealInterval) * 100),
+      ),
+    );
+  } else if (sortedLogs.length === 1) {
+    /**
+     * One completion means there is not enough history
+     * to confidently measure consistency.
+     */
+    consistencyRate = 20;
+  }
 
   const consistencyScore = Math.round(
-    consistencyRate * (0.5 + historyFactor * 0.5),
+    (consistencyRate / 100) * 30,
   );
 
-  /*
+  /**
+   * -------------------------
    * 3. STREAK SCORE
+   * -------------------------
    */
 
-  const streakValues = streaksList
-    .filter((streak) => habitsList.some((habit) => habit.id === streak.habitId))
-    .map((streak) => streak.currentStreak);
-
-  const longestCurrentStreak =
-    streakValues.length > 0 ? Math.max(...streakValues) : 0;
-
-  /*
-   * 30 consecutive days = 100 streak score.
-   */
+  const currentStreak = streak?.currentStreak ?? 0;
 
   const streakScore = Math.min(
-    100,
-    Math.round((longestCurrentStreak / 30) * 100),
+    20,
+    currentStreak * 2,
   );
 
-  /*
-   * 4. FINAL SCORE
-   * Completion  = 40%
-   * Consistency = 35%
-   * Streak      = 25%
+  /**
+   * -------------------------
+   * FINAL SCORE
+   * -------------------------
    */
 
-  const score = Math.round(
-    completionScore * 0.4 + consistencyScore * 0.35 + streakScore * 0.25,
+  const score = Math.max(
+    0,
+    Math.min(
+      100,
+      completionScore +
+        consistencyScore +
+        streakScore,
+    ),
   );
 
-  /*
-   * 5. STATUS
+  /**
+   * -------------------------
+   * STATUS
+   * -------------------------
    */
 
-  const status =
-    score >= 80
+  let status: HabitScoreResult["status"];
+
+  if (score >= 80) {
+    status = "excellent";
+  } else if (score >= 65) {
+    status = "good";
+  } else if (score >= 45) {
+    status = "fair";
+  } else {
+    status = "needs-attention";
+  }
+
+  const label =
+    status === "excellent"
       ? "Excellent"
-      : score >= 65
+      : status === "good"
         ? "Good"
-        : score >= 45
+        : status === "fair"
           ? "Fair"
           : "Needs Attention";
 
@@ -143,5 +216,45 @@ export function calculateHabitScore(
     consistencyScore,
     streakScore,
     status,
+    label,
   };
+}
+
+/**
+ * Calculate the overall score for all habits.
+ *
+ * This is what should power:
+ *
+ * Habit Score
+ * 62 / 100
+ *
+ * on the dashboard.
+ */
+export function calculateOverallHabitScore(
+  habitsList: Habit[],
+  logs: HabitLog[],
+  streaksList: Streak[],
+): number {
+  if (habitsList.length === 0) {
+    return 0;
+  }
+
+  const scores = habitsList.map((habit) => {
+    const streak = streaksList.find(
+      (item) => item.habitId === habit.id,
+    );
+
+    return calculateHabitScore(
+      habit,
+      logs,
+      streak,
+    ).score;
+  });
+
+  const total = scores.reduce(
+    (sum, score) => sum + score,
+    0,
+  );
+
+  return Math.round(total / scores.length);
 }

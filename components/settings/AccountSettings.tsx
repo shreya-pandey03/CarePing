@@ -12,10 +12,10 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { deleteAccount } from "@/actions/deleteAccount";
 import { exportUserData } from "@/actions/exportUserData";
 import { resetHabitData } from "@/actions/resetHabitData";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 export default function AccountSettings() {
   const [isPending, startTransition] = useTransition();
