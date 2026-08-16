@@ -1,26 +1,16 @@
 import { and, eq } from "drizzle-orm";
 
-import { db } from "../db";
+import { db } from "@/lib/db";
 import { habits, habitLogs } from "@/drizzle/schema";
 
-export type MonthlyAnalytics = {
-  completionRate: number;
-  completedHabits: number;
-  totalHabits: number;
-  month: string;
-  year: number;
-};
-
-export async function getMonthlyAnalytics(
-  userId: string,
-): Promise<MonthlyAnalytics> {
+export async function getMonthlyAnalytics(userId: string) {
   const now = new Date();
 
-  const month = now.toLocaleString("default", {
-    month: "long",
-  });
-
   const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+
+  const start = new Date(year, now.getMonth(), 1);
+  const end = new Date(year, now.getMonth() + 1, 1);
 
   const userHabits = await db.query.habits.findMany({
     where: and(eq(habits.userId, userId), eq(habits.active, true)),
@@ -30,27 +20,25 @@ export async function getMonthlyAnalytics(
     where: eq(habitLogs.userId, userId),
   });
 
-  const monthlyLogs = logs.filter((log) => {
-    const date = new Date(log.completedAt);
-
-    return (
-      date.getMonth() === now.getMonth() &&
-      date.getFullYear() === now.getFullYear()
-    );
-  });
-
-  // Count each habit only once
-  const completedHabits = new Set(monthlyLogs.map((log) => log.habitId)).size;
+  const monthlyLogs = logs.filter(
+    (log) => log.completedAt >= start && log.completedAt < end,
+  );
 
   const totalHabits = userHabits.length;
 
+  const completedHabits = new Set(monthlyLogs.map((log) => log.habitId)).size;
+
+  const totalPossible = totalHabits * now.getDate();
+
   const completionRate =
-    totalHabits === 0 ? 0 : Math.round((completedHabits / totalHabits) * 100);
+    totalPossible > 0
+      ? Math.round((monthlyLogs.length / totalPossible) * 100)
+      : 0;
 
   return {
-    completionRate,
-    completedHabits,
     totalHabits,
+    completedHabits,
+    completionRate: Math.min(completionRate, 100),
     month,
     year,
   };

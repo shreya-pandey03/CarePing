@@ -23,7 +23,8 @@ function Alert({
   className,
   variant,
   ...props
-}: React.ComponentProps<"div"> & VariantProps<typeof alertVariants>) {
+}: React.ComponentProps<"div"> &
+  VariantProps<typeof alertVariants>) {
   return (
     <div
       role="alert"
@@ -33,10 +34,16 @@ function Alert({
   );
 }
 
-function AlertTitle({ className, ...props }: React.ComponentProps<"h5">) {
+function AlertTitle({
+  className,
+  ...props
+}: React.ComponentProps<"h5">) {
   return (
     <h5
-      className={cn("mb-1 font-medium leading-none tracking-tight", className)}
+      className={cn(
+        "mb-1 font-medium leading-none tracking-tight",
+        className,
+      )}
       {...props}
     />
   );
@@ -54,4 +61,8 @@ function AlertDescription({
   );
 }
 
-export { Alert, AlertTitle, AlertDescription };
+export {
+  Alert,
+  AlertTitle,
+  AlertDescription,
+};
