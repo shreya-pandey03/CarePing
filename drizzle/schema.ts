@@ -428,6 +428,5 @@ export type NewHabit = InferInsertModel<typeof habits>;
 
 export type HabitLog = InferSelectModel<typeof habitLogs>;
 export type NewHabitLog = InferInsertModel<typeof habitLogs>;
-
 export type Streak = InferSelectModel<typeof streaks>;
 export type NewStreak = InferInsertModel<typeof streaks>;

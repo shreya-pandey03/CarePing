@@ -41,7 +41,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error("AI insights error:", error);
-
     return NextResponse.json(
       { error: "Failed to generate insights" },
       { status: 500 },

@@ -152,8 +152,9 @@ function TimeBar({
 }
 
 function formatHour(hour: number) {
-  const suffix = hour >= 12 ? "PM" : "AM";
-  const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+  const normalizedHour = hour % 24;
+  const suffix = normalizedHour >= 12 ? "PM" : "AM";
+  const displayHour = normalizedHour % 12 || 12;
 
   return `${displayHour}:00 ${suffix}`;
 }

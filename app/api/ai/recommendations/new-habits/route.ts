@@ -52,7 +52,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error("New habit recommendations error:", error);
-
     return NextResponse.json(
       { error: "Failed to generate new habit suggestions" },
       { status: 500 },

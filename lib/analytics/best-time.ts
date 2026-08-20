@@ -3,12 +3,10 @@ import { habitLogs } from "@/drizzle/schema";
 
 type HabitLog = InferSelectModel<typeof habitLogs>;
 
-export type BestTimePeriod = "morning" | "afternoon" | "evening" | "night";
-
 export type BestTimeResult = {
   habitId: string;
   habitTitle: string;
-  bestTime: BestTimePeriod;
+  bestTime: "morning" | "afternoon" | "evening" | "night";
   bestHour: number | null;
   morning: number;
   afternoon: number;
@@ -21,67 +19,64 @@ export function calculateBestTime(
   habitTitle: string,
   logs: HabitLog[],
 ): BestTimeResult {
-  const habitLogs = logs.filter(
+  const completedLogs = logs.filter(
     (log) => log.habitId === habitId && log.completed,
   );
 
+  const hours = completedLogs
+    .map((log) => {
+      const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Kolkata",
+        hour: "numeric",
+        hour12: false,
+      }).formatToParts(new Date(log.completedAt));
+
+      const hour = parts.find((part) => part.type === "hour")?.value;
+
+      return hour ? Number(hour) : null;
+    })
+    .filter((hour): hour is number => hour !== null);
+
+  const morning = hours.filter((hour) => hour >= 5 && hour < 12).length;
+  const afternoon = hours.filter((hour) => hour >= 12 && hour < 17).length;
+  const evening = hours.filter((hour) => hour >= 17 && hour < 21).length;
+  const night = hours.filter((hour) => hour >= 21 || hour < 5).length;
+
   const periods = {
-    morning: 0,
-    afternoon: 0,
-    evening: 0,
-    night: 0,
+    morning,
+    afternoon,
+    evening,
+    night,
   };
 
-  const hours: number[] = [];
+  const bestTime =
+    (Object.entries(periods).sort(
+      ([, a], [, b]) => b - a,
+    )[0]?.[0] as BestTimeResult["bestTime"]) ?? "morning";
 
-  for (const log of habitLogs) {
-    const date = new Date(log.completedAt);
-    const hour = date.getHours();
+  const hourCounts = hours.reduce<Record<number, number>>((acc, hour) => {
+    acc[hour] = (acc[hour] ?? 0) + 1;
+    return acc;
+  }, {});
 
-    hours.push(hour);
-
-    if (hour >= 5 && hour < 12) {
-      periods.morning++;
-    } else if (hour >= 12 && hour < 17) {
-      periods.afternoon++;
-    } else if (hour >= 17 && hour < 21) {
-      periods.evening++;
-    } else {
-      periods.night++;
-    }
-  }
-
-  const bestTime = (
-    Object.entries(periods) as [BestTimePeriod, number][]
-  ).reduce((best, current) => (current[1] > best[1] ? current : best), [
-    "morning",
-    0,
-  ] as [BestTimePeriod, number])[0];
-
-  const hourCounts = new Map<number, number>();
-
-  for (const hour of hours) {
-    hourCounts.set(hour, (hourCounts.get(hour) ?? 0) + 1);
-  }
-
-  let bestHour: number | null = null;
-  let maxCount = 0;
-
-  for (const [hour, count] of hourCounts) {
-    if (count > maxCount) {
-      maxCount = count;
-      bestHour = hour;
-    }
-  }
+  const bestHour =
+    hours.length > 0
+      ? Number(
+          Object.entries(hourCounts).sort(
+            ([hourA, countA], [hourB, countB]) =>
+              countB - countA || Number(hourA) - Number(hourB),
+          )[0]?.[0],
+        )
+      : null;
 
   return {
     habitId,
     habitTitle,
     bestTime,
     bestHour,
-    morning: periods.morning,
-    afternoon: periods.afternoon,
-    evening: periods.evening,
-    night: periods.night,
+    morning,
+    afternoon,
+    evening,
+    night,
   };
 }

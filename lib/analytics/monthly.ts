@@ -8,7 +8,6 @@ export async function getMonthlyAnalytics(userId: string) {
 
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
-
   const start = new Date(year, now.getMonth(), 1);
   const end = new Date(year, now.getMonth() + 1, 1);
 

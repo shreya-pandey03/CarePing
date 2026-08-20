@@ -32,7 +32,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Consistency analytics error:", error);
-
     return NextResponse.json(
       { error: "Failed to calculate consistency" },
       { status: 500 },

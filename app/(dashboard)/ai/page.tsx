@@ -11,12 +11,14 @@ import {
   monthlyReports,
   streaks,
   habits,
+  habitLogs,
 } from "@/drizzle/schema";
 import AIInsightCard from "@/components/ai/AIInsightCard";
 import WeeklyCoachReport from "@/components/ai/WeeklyCoachReport";
 import MonthlyCoachReport from "@/components/ai/MonthlyCoachReport";
 import StreakPrediction from "@/components/ai/StreakPrediction";
 import MotivationCard from "@/components/ai/MotivationCard";
+import { predictStreakRisk } from "@/lib/analytics/streak-prediction";
 
 export default async function AIPage() {
   const session = await auth();
@@ -59,26 +61,36 @@ export default async function AIPage() {
     where: eq(habits.userId, userId),
   });
 
+  const logs = await db.query.habitLogs.findMany({
+    where: eq(habitLogs.userId, userId),
+    orderBy: (habitLogs, { desc }) => [desc(habitLogs.completedAt)],
+  });
+
   const userStreaks = await db.query.streaks.findMany({
     where: eq(streaks.userId, userId),
   });
 
   // Prediction Data
 
+  // const predictions = userHabits.map((habit) => {
+  //   const streak = userStreaks.find((s) => s.habitId === habit.id);
+
+  //   const current = streak?.currentStreak ?? 0;
+
+  //   return {
+  //     habit: habit.title,
+
+  //     risk: current >= 14 ? "low" : current >= 5 ? "medium" : "high",
+
+  //     score: current >= 14 ? 20 : current >= 5 ? 55 : 85,
+
+  //     recommendation: "Complete this habit today to maintain momentum.",
+  //   } as const;
+  // });
   const predictions = userHabits.map((habit) => {
-    const streak = userStreaks.find((s) => s.habitId === habit.id);
+    const streak = userStreaks.find((streak) => streak.habitId === habit.id);
 
-    const current = streak?.currentStreak ?? 0;
-
-    return {
-      habit: habit.title,
-
-      risk: current >= 14 ? "low" : current >= 5 ? "medium" : "high",
-
-      score: current >= 14 ? 20 : current >= 5 ? 55 : 85,
-
-      recommendation: "Complete this habit today to maintain momentum.",
-    } as const;
+    return predictStreakRisk(habit, logs, streak);
   });
 
   return (
@@ -111,7 +123,6 @@ export default async function AIPage() {
           recommendations={latestWeeklyReport.recommendations}
         />
       )}
-
       {latestMonthlyReport && (
         <MonthlyCoachReport
           month={`${latestMonthlyReport.month}/${latestMonthlyReport.year}`}
@@ -120,12 +131,10 @@ export default async function AIPage() {
           completionRate={latestMonthlyReport.completionRate}
           longestStreak={Math.max(
             ...userStreaks.map((s) => s.longestStreak),
-
             0,
           )}
           achievements={[
             `Completed ${latestMonthlyReport.completedHabits} habits this month`,
-
             `Tracked ${latestMonthlyReport.totalHabits} habits`,
           ]}
           recommendations={aiRecommendations.map((r) => r.description)}
@@ -137,11 +146,7 @@ export default async function AIPage() {
       <MotivationCard
         title="Today's Motivation"
         message="Success comes from small consistent actions. Every completed habit is another step toward your long-term goals."
-        streak={Math.max(
-          ...userStreaks.map((s) => s.currentStreak),
-
-          0,
-        )}
+        streak={Math.max(...userStreaks.map((s) => s.currentStreak), 0)}
         completedToday={0}
         goalToday={userHabits.length}
       />

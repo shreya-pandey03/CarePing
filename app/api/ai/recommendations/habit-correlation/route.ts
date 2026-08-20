@@ -41,7 +41,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Habit correlation error:", error);
-
     return NextResponse.json(
       { error: "Failed to calculate habit correlations" },
       { status: 500 },

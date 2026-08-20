@@ -15,7 +15,6 @@ export async function GET() {
         { status: 401 },
       );
     }
-
     const userId = session.user.id;
 
     const [userHabits, logs, userStreaks] = await Promise.all([
