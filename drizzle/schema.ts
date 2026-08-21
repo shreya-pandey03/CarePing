@@ -362,6 +362,9 @@ export const goals = pgTable(
         onDelete: "cascade",
       })
       .notNull(),
+    habitId: text("habit_id").references(() => habits.id, {
+      onDelete: "cascade",
+    }),
     title: text("title").notNull(),
     description: text("description"),
     targetValue: integer("target_value").default(30).notNull(),
@@ -373,6 +376,9 @@ export const goals = pgTable(
   },
   (table) => ({
     userIdx: index("goal_user_idx").on(table.userId),
+
+    // NEW
+    habitIdx: index("goal_habit_idx").on(table.habitId),
   }),
 );
 

@@ -15,9 +15,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-
 import { Badge } from "@/components/ui/badge";
-
 import { Progress } from "@/components/ui/progress";
 
 interface WeeklyCoachReportProps {
@@ -55,36 +53,27 @@ export default function WeeklyCoachReport({
       </CardHeader>
 
       <CardContent className="space-y-8">
-        {/* Overall Score */}
-
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="font-medium">Weekly Score</span>
-
-            <span className="font-bold text-lg">{score}/100</span>
+            <span className="text-lg font-bold">{score}/100</span>
           </div>
 
           <Progress value={score} />
         </div>
 
-        {/* Summary */}
-
         <div className="rounded-lg border p-4">
           <div className="mb-3 flex items-center gap-2">
             <Target className="h-5 w-5 text-orange-500" />
-
             <h3 className="font-semibold">Summary</h3>
           </div>
 
           <p className="text-sm leading-6 text-muted-foreground">{summary}</p>
         </div>
 
-        {/* Strengths */}
-
         <div>
           <div className="mb-3 flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-green-500" />
-
             <h3 className="font-semibold">Strengths</h3>
           </div>
 
@@ -100,12 +89,9 @@ export default function WeeklyCoachReport({
           </ul>
         </div>
 
-        {/* Improvements */}
-
         <div>
           <div className="mb-3 flex items-center gap-2">
             <TriangleAlert className="h-5 w-5 text-yellow-500" />
-
             <h3 className="font-semibold">Areas to Improve</h3>
           </div>
 
@@ -121,12 +107,9 @@ export default function WeeklyCoachReport({
           </ul>
         </div>
 
-        {/* Recommendations */}
-
         <div>
           <div className="mb-3 flex items-center gap-2">
             <Trophy className="h-5 w-5 text-blue-500" />
-
             <h3 className="font-semibold">AI Recommendations</h3>
           </div>
 

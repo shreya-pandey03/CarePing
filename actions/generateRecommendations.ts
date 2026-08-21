@@ -1,51 +1,35 @@
 "use server";
 
-import { z } from "zod";
-import { buildRecommendationPrompt } from "@/lib/promptBuilder";
-import { generateRecommendations as generateAIRecommendations } from "@/lib/gemini";
+import { eq } from "drizzle-orm";
 
-const habitSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  category: z.string(),
-});
+import { auth } from "@/auth";
+import { db } from "@/lib/db";
+import { habits, habitLogs, streaks } from "@/drizzle/schema";
 
-const logSchema = z.object({
-  completedAt: z.date(),
-});
+import { generateHabitRecommendations } from "@/lib/recommendations/recommendation-engine";
 
-const streakSchema = z.object({
-  currentStreak: z.number(),
-  longestStreak: z.number(),
-});
+export async function generateRecommendations() {
+  const session = await auth();
 
-const inputSchema = z.object({
-  habits: z.array(habitSchema),
-  logs: z.array(logSchema),
-  streaks: z.array(streakSchema),
-});
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
 
-export type GenerateRecommendationsInput = z.infer<typeof inputSchema>;
+  const userId = session.user.id;
 
-export interface RecommendationResult {
-  recommendations: string[];
-}
+  const [userHabits, logs, userStreaks] = await Promise.all([
+    db.query.habits.findMany({
+      where: eq(habits.userId, userId),
+    }),
 
-export async function generateRecommendations(
-  input: GenerateRecommendationsInput,
-): Promise<RecommendationResult> {
-  const validated = inputSchema.parse(input);
+    db.query.habitLogs.findMany({
+      where: eq(habitLogs.userId, userId),
+    }),
 
-  const prompt = buildRecommendationPrompt({
-    habits: validated.habits,
-    logs: validated.logs,
-    streaks: validated.streaks,
-    goals: [],
-  });
+    db.query.streaks.findMany({
+      where: eq(streaks.userId, userId),
+    }),
+  ]);
 
-  const response = await generateAIRecommendations(prompt);
-
-  return {
-    recommendations: response.recommendations,
-  };
+  return generateHabitRecommendations(userHabits, logs, userStreaks);
 }

@@ -12,7 +12,6 @@ export const weeklyReportWorker = new Worker(
   async (job: Job<WeeklyReportJobData>) => {
     try {
       const { userId } = job.data;
-
       console.log(`Generating Weekly Report for ${userId}`);
 
       const result = await generateWeeklyReport(userId);

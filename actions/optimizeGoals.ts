@@ -8,7 +8,6 @@ import { redis } from "@/lib/redis";
 
 import { generateGoalOptimization } from "@/lib/gemini";
 import { buildGoalOptimizationPrompt } from "@/lib/promptBuilder";
-
 import { goals } from "@/drizzle/schema";
 
 interface GoalSuggestion {

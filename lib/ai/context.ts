@@ -37,17 +37,16 @@ export function buildAIContext(
   logs: HabitLog[],
   streaks: Streak[],
 ): AIContext {
-  // ----------------------------------------
-  // Dashboard numbers
-  // ----------------------------------------
-
   const today = new Date();
 
   const todayString = today.toDateString();
 
   const completedToday = new Set(
     logs
-      .filter((log) => log.completedAt.toDateString() === todayString)
+      .filter(
+        (log) =>
+          log.completed && log.completedAt.toDateString() === todayString,
+      )
       .map((log) => log.habitId),
   ).size;
 
@@ -56,15 +55,7 @@ export function buildAIContext(
   const completionRate =
     totalHabits === 0 ? 0 : Math.round((completedToday / totalHabits) * 100);
 
-  // ----------------------------------------
-  // Weekly analytics
-  // ----------------------------------------
-
   const weeklyGrade = calculateWeeklyGrade(habits, logs, streaks);
-
-  // ----------------------------------------
-  // Habit health
-  // ----------------------------------------
 
   const healthScores = habits.map((habit) => {
     const streak = streaks.find((streak) => streak.habitId === habit.id);
@@ -73,13 +64,9 @@ export function buildAIContext(
 
     return {
       ...health,
-      title: habit.title,
+      title: habit.title.trim(),
     };
   });
-
-  // ----------------------------------------
-  // Streak predictions
-  // ----------------------------------------
 
   const streakPredictions = habits.map((habit) => {
     const streak = streaks.find((streak) => streak.habitId === habit.id);
@@ -88,13 +75,16 @@ export function buildAIContext(
 
     return {
       ...prediction,
-      title: habit.title,
+      title: habit.title.trim(),
     };
   });
 
-  // ----------------------------------------
-  // AI insights
-  // ----------------------------------------
+  const sorted = [...healthScores].sort((a, b) => b.score - a.score);
+
+  const strongestHabit = sorted.length > 0 ? sorted[0].title : null;
+
+  const weakestHabit =
+    sorted.length > 1 ? sorted[sorted.length - 1].title : null;
 
   const insights = generateInsights({
     habits,
@@ -102,36 +92,15 @@ export function buildAIContext(
     streaks,
   });
 
-  // ----------------------------------------
-  // Strongest / weakest habit
-  // ----------------------------------------
-
-  const sorted = [...healthScores].sort((a, b) => b.score - a.score);
-
-  const strongestHabit = sorted.length > 0 ? sorted[0].title : null;
-
-  const weakestHabit =
-    sorted.length > 0 ? sorted[sorted.length - 1].title : null;
-
-  // ----------------------------------------
-  // Final AI context
-  // ----------------------------------------
-
   return {
     generatedAt: new Date(),
-
     completionRate,
     completedToday,
     totalHabits,
-
     weeklyGrade,
-
     healthScores,
-
     streakPredictions,
-
     insights,
-
     strongestHabit,
     weakestHabit,
   };

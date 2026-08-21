@@ -3,7 +3,8 @@ import { eq } from "drizzle-orm";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { recommendations } from "@/drizzle/schema";
+import { recommendations as recommendationsTable } from "@/drizzle/schema";
+
 import {
   Card,
   CardContent,
@@ -11,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 import { Badge } from "@/components/ui/badge";
 
 export default async function RecommendationsPage() {
@@ -21,7 +23,7 @@ export default async function RecommendationsPage() {
   }
 
   const userRecommendations = await db.query.recommendations.findMany({
-    where: eq(recommendations.userId, session.user.id),
+    where: eq(recommendationsTable.userId, session.user.id),
     orderBy: (table, { desc }) => [desc(table.createdAt)],
   });
 
@@ -52,7 +54,7 @@ export default async function RecommendationsPage() {
           {userRecommendations.map((recommendation) => (
             <Card key={recommendation.id}>
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-4">
                   <CardTitle>{recommendation.title}</CardTitle>
 
                   <Badge>{recommendation.priority}</Badge>

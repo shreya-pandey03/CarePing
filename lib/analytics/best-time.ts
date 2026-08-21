@@ -14,33 +14,31 @@ export type BestTimeResult = {
   night: number;
 };
 
+function getIndiaHour(date: Date) {
+  const formatted = new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour: "numeric",
+    hour12: false,
+  }).format(date);
+
+  return Number(formatted);
+}
+
 export function calculateBestTime(
   habitId: string,
   habitTitle: string,
   logs: HabitLog[],
 ): BestTimeResult {
-  const completedLogs = logs.filter(
-    (log) => log.habitId === habitId && log.completed,
-  );
+  const hours = logs
+    .filter(
+      (log) => log.habitId === habitId && log.completed && log.completedAt,
+    )
+    .map((log) => getIndiaHour(new Date(log.completedAt)));
 
-  const hours = completedLogs
-    .map((log) => {
-      const parts = new Intl.DateTimeFormat("en-US", {
-        timeZone: "Asia/Kolkata",
-        hour: "numeric",
-        hour12: false,
-      }).formatToParts(new Date(log.completedAt));
-
-      const hour = parts.find((part) => part.type === "hour")?.value;
-
-      return hour ? Number(hour) : null;
-    })
-    .filter((hour): hour is number => hour !== null);
-
-  const morning = hours.filter((hour) => hour >= 5 && hour < 12).length;
-  const afternoon = hours.filter((hour) => hour >= 12 && hour < 17).length;
-  const evening = hours.filter((hour) => hour >= 17 && hour < 21).length;
-  const night = hours.filter((hour) => hour >= 21 || hour < 5).length;
+  const morning = hours.filter((h) => h >= 5 && h < 12).length;
+  const afternoon = hours.filter((h) => h >= 12 && h < 17).length;
+  const evening = hours.filter((h) => h >= 17 && h < 21).length;
+  const night = hours.filter((h) => h >= 21 || h < 5).length;
 
   const periods = {
     morning,
@@ -61,17 +59,12 @@ export function calculateBestTime(
 
   const bestHour =
     hours.length > 0
-      ? Number(
-          Object.entries(hourCounts).sort(
-            ([hourA, countA], [hourB, countB]) =>
-              countB - countA || Number(hourA) - Number(hourB),
-          )[0]?.[0],
-        )
+      ? Number(Object.entries(hourCounts).sort(([, a], [, b]) => b - a)[0][0])
       : null;
 
   return {
     habitId,
-    habitTitle,
+    habitTitle: habitTitle.trim(),
     bestTime,
     bestHour,
     morning,

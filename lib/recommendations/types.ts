@@ -27,3 +27,22 @@ export interface HabitRecommendation {
 
   action: string;
 }
+
+// export type RecommendationPriority = "low" | "medium" | "high";
+
+export type RecommendationType =
+  | "streak"
+  | "consistency"
+  | "timing"
+  | "completion"
+  | "habit_health";
+
+export interface HabitRecommendation {
+  habitId: string;
+  habitTitle: string;
+  type: RecommendationType;
+  priority: RecommendationPriority;
+  title: string;
+  message: string;
+  action: string;
+}

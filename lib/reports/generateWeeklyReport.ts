@@ -6,9 +6,7 @@ import { habits, habitLogs, streaks, weeklyReports } from "@/drizzle/schema";
 export async function generateWeeklyReport(userId: string) {
   const now = new Date();
 
-  // -----------------------------
   // WEEK RANGE
-  // -----------------------------
 
   const weekEnd = new Date(now);
   weekEnd.setHours(23, 59, 59, 999);
@@ -17,9 +15,7 @@ export async function generateWeeklyReport(userId: string) {
   weekStart.setDate(weekStart.getDate() - 6);
   weekStart.setHours(0, 0, 0, 0);
 
-  // -----------------------------
   // FETCH DATA
-  // -----------------------------
 
   const [userHabits, logs, userStreaks] = await Promise.all([
     db.query.habits.findMany({
@@ -39,9 +35,7 @@ export async function generateWeeklyReport(userId: string) {
     }),
   ]);
 
-  // -----------------------------
   // NO HABITS
-  // -----------------------------
 
   if (userHabits.length === 0) {
     return null;
@@ -52,9 +46,7 @@ export async function generateWeeklyReport(userId: string) {
 
   const totalHabits = userHabits.length;
 
-  // -----------------------------
   // POSSIBLE COMPLETIONS
-  // -----------------------------
 
   let possibleCompletions = 0;
 
@@ -68,9 +60,7 @@ export async function generateWeeklyReport(userId: string) {
     }
   }
 
-  // -----------------------------
   // COMPLETION RATE
-  // -----------------------------
 
   const completedActivities = weeklyLogs.length;
 
@@ -82,9 +72,7 @@ export async function generateWeeklyReport(userId: string) {
         )
       : 0;
 
-  // -----------------------------
   // STRONGEST HABIT
-  // -----------------------------
 
   const strongestHabit = userHabits
     .map((habit) => {
@@ -108,9 +96,7 @@ export async function generateWeeklyReport(userId: string) {
       return b.completedCount - a.completedCount;
     })[0];
 
-  // -----------------------------
   // WEAKEST HABIT
-  // -----------------------------
 
   const weakestHabit = userHabits
     .map((habit) => {
@@ -125,18 +111,14 @@ export async function generateWeeklyReport(userId: string) {
     })
     .sort((a, b) => a.completedCount - b.completedCount)[0];
 
-  // -----------------------------
   // BEST STREAK
-  // -----------------------------
 
   const bestStreak =
     userStreaks.length > 0
       ? Math.max(...userStreaks.map((streak) => streak.longestStreak))
       : 0;
 
-  // -----------------------------
   // TITLE
-  // -----------------------------
 
   const title =
     completionRate >= 90
@@ -147,9 +129,7 @@ export async function generateWeeklyReport(userId: string) {
           ? "Good Progress"
           : "Keep Building";
 
-  // -----------------------------
   // SUMMARY
-  // -----------------------------
 
   const summary =
     completionRate >= 90
@@ -160,9 +140,7 @@ export async function generateWeeklyReport(userId: string) {
           ? "You are making progress. Focus on completing your habits consistently each day."
           : "This week was challenging, but every completed habit is progress. Focus on rebuilding your routine.";
 
-  // -----------------------------
   // STRENGTHS
-  // -----------------------------
 
   const strengths: string[] = [];
 
@@ -179,10 +157,7 @@ export async function generateWeeklyReport(userId: string) {
   if (bestStreak > 0) {
     strengths.push(`Your best recorded streak is ${bestStreak} days.`);
   }
-
-  // -----------------------------
   // IMPROVEMENTS
-  // -----------------------------
 
   const improvements: string[] = [];
 
@@ -200,9 +175,7 @@ export async function generateWeeklyReport(userId: string) {
     );
   }
 
-  // -----------------------------
   // RECOMMENDATIONS
-  // -----------------------------
 
   const recommendations = [
     "Protect your strongest streak.",
@@ -210,9 +183,7 @@ export async function generateWeeklyReport(userId: string) {
     "Keep your daily routine simple and consistent.",
   ];
 
-  // -----------------------------
   // SAVE REPORT
-  // -----------------------------
 
   const [report] = await db
     .insert(weeklyReports)

@@ -1,11 +1,19 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { and, eq, gte, lt } from "drizzle-orm";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { habitLogs, habits, streaks } from "@/drizzle/schema";
+
+import {
+  habitLogs,
+  habits,
+  streaks,
+  goals,
+  notifications,
+} from "@/drizzle/schema";
+
 import { publishRealtimeEvent } from "@/lib/realtime/publisher";
 import { CHANNELS } from "@/lib/realtime/channels";
 import { analyticsQueue } from "@/jobs/queues/analytics.queue";
@@ -37,7 +45,14 @@ export async function completeHabit(habitId: string) {
   }
 
   const userId = session.user.id;
+
   try {
+    /*
+     * --------------------------------------------------
+     * 1. Verify habit belongs to current user
+     * --------------------------------------------------
+     */
+
     const habit = await db.query.habits.findFirst({
       where: and(eq(habits.id, habitId), eq(habits.userId, userId)),
     });
@@ -51,18 +66,42 @@ export async function completeHabit(habitId: string) {
 
     const today = new Date();
 
+    /*
+     * --------------------------------------------------
+     * 2. Check if habit is already completed today
+     * --------------------------------------------------
+     */
+
+    const startOfDay = new Date(today);
+
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(today);
+
+    endOfDay.setHours(23, 59, 59, 999);
+
     const existing = await db.query.habitLogs.findFirst({
-      where: and(eq(habitLogs.habitId, habitId), eq(habitLogs.userId, userId)),
+      where: and(
+        eq(habitLogs.habitId, habitId),
+        eq(habitLogs.userId, userId),
+        eq(habitLogs.completed, true),
+        gte(habitLogs.completedAt, startOfDay),
+        lt(habitLogs.completedAt, endOfDay),
+      ),
     });
 
-    if (existing && isSameDay(existing.completedAt, today)) {
+    if (existing) {
       return {
         success: false,
         message: "Already completed today",
       };
     }
 
-    // 1. Create habit log
+    /*
+     * --------------------------------------------------
+     * 3. Create habit completion log
+     * --------------------------------------------------
+     */
 
     await db.insert(habitLogs).values({
       id: crypto.randomUUID(),
@@ -72,18 +111,28 @@ export async function completeHabit(habitId: string) {
       completedAt: today,
     });
 
+    /*
+     * --------------------------------------------------
+     * 4. Publish realtime event
+     * --------------------------------------------------
+     */
+
     await publishRealtimeEvent(CHANNELS.HABIT_COMPLETED, {
-      userId: session.user.id,
+      userId,
       type: CHANNELS.HABIT_COMPLETED,
       payload: {
         habitId,
       },
     });
 
-    // 2. Get current streak
+    /*
+     * --------------------------------------------------
+     * 5. Update streak
+     * --------------------------------------------------
+     */
 
     const streak = await db.query.streaks.findFirst({
-      where: eq(streaks.habitId, habitId),
+      where: and(eq(streaks.habitId, habitId), eq(streaks.userId, userId)),
     });
 
     if (!streak) {
@@ -115,51 +164,144 @@ export async function completeHabit(habitId: string) {
         .update(streaks)
         .set({
           currentStreak: newCurrentStreak,
-
           longestStreak: newLongestStreak,
-
           totalCompletions: streak.totalCompletions + 1,
-
           lastCompletedAt: today,
+          updatedAt: today,
+        })
+        .where(and(eq(streaks.habitId, habitId), eq(streaks.userId, userId)));
+    }
+
+    /*
+     * --------------------------------------------------
+     * 6. Update goal belonging to THIS habit
+     * --------------------------------------------------
+     */
+
+    const activeGoal = await db.query.goals.findFirst({
+      where: and(
+        eq(goals.userId, userId),
+        eq(goals.habitId, habitId),
+        eq(goals.status, "active"),
+      ),
+    });
+
+    if (activeGoal) {
+      /*
+       * Count actual completed logs instead of simply
+       * incrementing currentValue.
+       *
+       * This keeps the goal synchronized with habit logs.
+       */
+
+      const completedLogs = await db.query.habitLogs.findMany({
+        where: and(
+          eq(habitLogs.userId, userId),
+          eq(habitLogs.habitId, habitId),
+          eq(habitLogs.completed, true),
+        ),
+      });
+
+      const currentValue = completedLogs.length;
+
+      const goalCompleted = currentValue >= activeGoal.targetValue;
+
+      await db
+        .update(goals)
+        .set({
+          currentValue: Math.min(currentValue, activeGoal.targetValue),
+
+          status: goalCompleted ? "completed" : "active",
 
           updatedAt: today,
         })
-        .where(eq(streaks.habitId, habitId));
+        .where(and(eq(goals.id, activeGoal.id), eq(goals.userId, userId)));
+
+      /*
+       * Create notification only when goal
+       * becomes completed.
+       */
+
+      if (goalCompleted) {
+        await db.insert(notifications).values({
+          id: crypto.randomUUID(),
+
+          userId,
+
+          title: "Goal Completed 🎉",
+
+          message: `Congratulations! You completed your goal "${activeGoal.title}".`,
+
+          category: "achievement",
+
+          actionUrl: "/goals",
+
+          createdAt: today,
+        });
+      }
     }
 
-    // 3. Clear dashboard cache
-
-    const cacheKey = `dashboard:${userId}`;
+    /*
+     * --------------------------------------------------
+     * 7. Clear AI report cache
+     * --------------------------------------------------
+     */
 
     const aiReportCacheKey = `ai:report:${userId}`;
 
     try {
-      await Promise.all([
-        // Dashboard cache (enable if you're caching dashboard)
-        // redis.del(dashboardCacheKey),
-
-        // AI report cache
-        redis.del(aiReportCacheKey),
-      ]);
+      await redis.del(aiReportCacheKey);
     } catch (error) {
-      console.error("Failed to clear caches:", error);
+      console.error("Failed to clear AI cache:", error);
     }
+
+    /*
+     * --------------------------------------------------
+     * 8. Update analytics queue
+     * --------------------------------------------------
+     */
 
     await analyticsQueue.add("update-analytics", {
       userId,
       habitId,
     });
 
+    /*
+     * --------------------------------------------------
+     * 9. Revalidate pages
+     * --------------------------------------------------
+     */
+
     revalidatePath("/dashboard");
+
     revalidatePath("/habits");
+
     revalidatePath(`/habits/${habitId}`);
+
+    revalidatePath("/analytics");
+
+    revalidatePath("/insights");
+
+    revalidatePath("/recommendations");
+
+    revalidatePath("/goals");
+
+    revalidatePath("/notifications");
+
+    revalidatePath("/streaks");
+
+    /*
+     * --------------------------------------------------
+     * 10. Return success
+     * --------------------------------------------------
+     */
 
     return {
       success: true,
       message: "Habit completed",
     };
   } catch (error) {
-    console.error("Complete Habit Error", error);
+    console.error("Complete Habit Error:", error);
 
     return {
       success: false,

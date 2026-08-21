@@ -1,18 +1,12 @@
 import { redirect } from "next/navigation";
 import { desc, eq } from "drizzle-orm";
+import { Bell } from "lucide-react";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { notifications } from "@/drizzle/schema";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Bell, Calendar, CheckCircle2 } from "lucide-react";
+
+import NotificationList from "@/components/notifications/NotificationList";
 
 export default async function NotificationsPage() {
   const session = await auth();
@@ -21,83 +15,63 @@ export default async function NotificationsPage() {
     redirect("/login");
   }
 
-  const userNotifications = await db.query.notifications.findMany({
-    where: eq(notifications.userId, session.user.id),
-    orderBy: (table, { desc }) => [desc(table.createdAt)],
-  });
+  const userNotifications = await db
+    .select({
+      id: notifications.id,
+      title: notifications.title,
+      message: notifications.message,
+      category: notifications.category,
+      isRead: notifications.isRead,
+      actionUrl: notifications.actionUrl,
+      createdAt: notifications.createdAt,
+    })
+    .from(notifications)
+    .where(eq(notifications.userId, session.user.id))
+    .orderBy(desc(notifications.createdAt));
+
+  const formattedNotifications = userNotifications.map((notification) => ({
+    id: notification.id,
+    title: notification.title,
+    message: notification.message,
+    category: notification.category,
+    isRead: notification.isRead,
+    actionUrl: notification.actionUrl,
+    createdAt: notification.createdAt,
+  }));
+
+  const unreadCount = formattedNotifications.filter(
+    (notification) => !notification.isRead,
+  ).length;
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">Notifications</h1>
+      {/* Page Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
+              <Bell className="h-5 w-5" />
+            </div>
 
-        <p className="text-muted-foreground">
-          Stay informed about reminders, streaks, AI insights, and habit
-          activity.
-        </p>
+            <div>
+              <h1 className="text-3xl font-bold">Notifications</h1>
+
+              <p className="mt-1 text-muted-foreground">
+                Stay updated with your habits, goals and AI coach.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {unreadCount > 0 && (
+          <div className="rounded-full bg-primary px-3 py-1 text-sm font-medium text-primary-foreground">
+            {unreadCount} unread
+          </div>
+        )}
       </div>
 
-      {userNotifications.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Bell className="mx-auto mb-4 h-10 w-10 text-muted-foreground" />
-
-            <h2 className="text-xl font-semibold">No Notifications</h2>
-
-            <p className="mt-2 text-muted-foreground">You're all caught up.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {userNotifications.map((notification) => (
-            <Card key={notification.id}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>{notification.title}</CardTitle>
-
-                  <Badge
-                    variant={notification.isRead ? "secondary" : "default"}
-                  >
-                    {notification.isRead ? "Read" : "Unread"}
-                  </Badge>
-                </div>
-
-                <CardDescription>{notification.category}</CardDescription>
-              </CardHeader>
-
-              <CardContent className="space-y-4">
-                <p className="leading-7 text-muted-foreground">
-                  {notification.message}
-                </p>
-
-                <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-
-                    {notification.createdAt.toLocaleDateString()}
-                  </div>
-
-                  {notification.sentAt && (
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      Sent
-                    </div>
-                  )}
-                </div>
-
-                {notification.actionUrl && (
-                  <a
-                    href={notification.actionUrl}
-                    className="text-sm font-medium text-primary hover:underline"
-                  >
-                    Open →
-                  </a>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      {/* Notification List */}
+      <NotificationList initialNotifications={formattedNotifications} />
     </div>
   );
 }
