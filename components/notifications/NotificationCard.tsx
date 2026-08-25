@@ -1,22 +1,15 @@
 "use client";
 
-import {
-  Bell,
-  CheckCircle2,
-  Flame,
-  Lightbulb,
-  Target,
-  Trophy,
-  FileText,
-  Trash2,
-  Check,
-} from "lucide-react";
+import { useTransition } from "react";
+import { Check, Trash2, Bell } from "lucide-react";
 
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { markNotificationAsRead } from "@/actions/notifications/markAsRead";
+import { deleteNotification } from "@/actions/notifications/deleteNotification";
 
-export type NotificationItem = {
+type Notification = {
   id: string;
   title: string;
   message: string;
@@ -36,150 +29,120 @@ export type NotificationItem = {
 };
 
 interface Props {
-  notification: NotificationItem;
-  onMarkAsRead: (id: string) => void;
-  onDelete: (id: string) => void;
+  notification: Notification;
 }
 
-const categoryConfig = {
-  achievement: {
-    label: "Achievement",
-    icon: Trophy,
-  },
+export default function NotificationCard({ notification }: Props) {
+  const router = useRouter();
 
-  motivation: {
-    label: "Motivation",
-    icon: Lightbulb,
-  },
+  const [isPending, startTransition] = useTransition();
 
-  habit_reminder: {
-    label: "Habit Reminder",
-    icon: Bell,
-  },
+  function handleRead() {
+    startTransition(async () => {
+      await markNotificationAsRead(notification.id);
 
-  goal_reminder: {
-    label: "Goal Reminder",
-    icon: Target,
-  },
+      router.refresh();
+    });
+  }
 
-  weekly_report: {
-    label: "Weekly Report",
-    icon: FileText,
-  },
+  function handleDelete() {
+    startTransition(async () => {
+      await deleteNotification(notification.id);
 
-  monthly_report: {
-    label: "Monthly Report",
-    icon: FileText,
-  },
+      router.refresh();
+    });
+  }
 
-  streak_warning: {
-    label: "Streak Warning",
-    icon: Flame,
-  },
+  function handleOpen() {
+    if (!notification.isRead) {
+      startTransition(async () => {
+        await markNotificationAsRead(notification.id);
 
-  recommendation: {
-    label: "Recommendation",
-    icon: Lightbulb,
-  },
+        if (notification.actionUrl) {
+          router.push(notification.actionUrl);
+        } else {
+          router.refresh();
+        }
+      });
 
-  reminder: {
-    label: "Reminder",
-    icon: Bell,
-  },
-} as const;
+      return;
+    }
 
-export default function NotificationCard({
-  notification,
-  onMarkAsRead,
-  onDelete,
-}: Props) {
-  const config = categoryConfig[notification.category];
-
-  const Icon = config?.icon ?? Bell;
+    if (notification.actionUrl) {
+      router.push(notification.actionUrl);
+    }
+  }
 
   return (
-    <Card
-      className={`transition ${
-        notification.isRead
-          ? "opacity-70"
-          : "border-primary/30 bg-primary/[0.03]"
+    <div
+      className={`rounded-xl border p-5 transition ${
+        notification.isRead ? "bg-background" : "bg-primary/5 border-primary/20"
       }`}
     >
-      <CardContent className="flex gap-4 p-5">
-        {/* Icon */}
-        <div
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
-            notification.isRead ? "bg-muted" : "bg-primary/10"
-          }`}
-        >
-          <Icon className="h-5 w-5" />
+      <div className="flex items-start gap-4">
+        <div className="mt-1 rounded-full bg-muted p-2">
+          <Bell className="h-5 w-5" />
         </div>
 
-        {/* Content */}
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-semibold">{notification.title}</h3>
+              <h3 className="font-semibold">{notification.title}</h3>
 
-                {!notification.isRead && (
-                  <span className="h-2 w-2 rounded-full bg-primary" />
-                )}
-              </div>
-
-              <Badge variant="secondary" className="mt-2">
-                {config?.label ?? "Notification"}
+              <Badge variant="secondary" className="mt-2 capitalize">
+                {notification.category.replace("_", " ")}
               </Badge>
             </div>
 
-            <span className="text-xs text-muted-foreground">
-              {formatDate(notification.createdAt)}
-            </span>
+            {!notification.isRead && (
+              <span className="h-2.5 w-2.5 rounded-full bg-primary" />
+            )}
           </div>
 
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+          <p className="mt-3 text-sm text-muted-foreground">
             {notification.message}
           </p>
 
-          {/* Actions */}
-          <div className="mt-4 flex flex-wrap gap-2">
+          <p className="mt-3 text-xs text-muted-foreground">
+            {notification.createdAt.toLocaleString()}
+          </p>
+
+          <div className="mt-4 flex gap-2">
+            {notification.actionUrl && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleOpen}
+                disabled={isPending}
+              >
+                Open
+              </Button>
+            )}
+
             {!notification.isRead && (
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => onMarkAsRead(notification.id)}
+                onClick={handleRead}
+                disabled={isPending}
               >
                 <Check className="mr-2 h-4 w-4" />
                 Mark as read
               </Button>
             )}
 
-            {notification.actionUrl && (
-              <Button size="sm" variant="outline">
-                <a href={notification.actionUrl}>View</a>
-              </Button>
-            )}
-
             <Button
               size="sm"
               variant="ghost"
-              className="text-destructive hover:text-destructive"
-              onClick={() => onDelete(notification.id)}
+              onClick={handleDelete}
+              disabled={isPending}
             >
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
             </Button>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
-}
-
-function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(date));
 }

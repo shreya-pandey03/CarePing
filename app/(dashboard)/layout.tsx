@@ -7,6 +7,7 @@ import Footer from "@/components/common/Footer";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import DashboardRealtime from "@/components/dashboard/DashboardRealtime";
 
+
 interface DashboardLayoutProps {
   children: ReactNode;
 }

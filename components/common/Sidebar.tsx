@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
+import { Trophy } from "lucide-react";
 import {
   LayoutDashboard,
   SquareCheckBig,
@@ -68,6 +68,11 @@ const items = [
     title: "Streaks",
     url: "/streaks",
     icon: Flame,
+  },
+  {
+    title: "Achievements",
+    url: "/achievements",
+    icon: Trophy,
   },
   {
     title: "Notifications",

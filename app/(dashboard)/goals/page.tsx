@@ -3,7 +3,7 @@ import { eq, desc } from "drizzle-orm";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { goals } from "@/drizzle/schema";
+import { goals, habits } from "@/drizzle/schema";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -19,6 +19,9 @@ export default async function GoalsPage() {
   const userGoals = await db.query.goals.findMany({
     where: eq(goals.userId, session.user.id),
     orderBy: [desc(goals.createdAt)],
+  });
+  const userHabits = await db.query.habits.findMany({
+    where: eq(habits.userId, session.user.id),
   });
 
   return (
@@ -38,7 +41,7 @@ export default async function GoalsPage() {
         </CardHeader>
 
         <CardContent>
-          <CreateGoalForm />
+          <CreateGoalForm habits={userHabits} />
         </CardContent>
       </Card>
 

@@ -1,12 +1,13 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { notifications } from "@/drizzle/schema";
 
-export async function markAllNotificationsAsRead() {
+export async function markNotificationRead(notificationId: string) {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -18,7 +19,14 @@ export async function markAllNotificationsAsRead() {
     .set({
       isRead: true,
     })
-    .where(eq(notifications.userId, session.user.id));
+    .where(
+      and(
+        eq(notifications.id, notificationId),
+        eq(notifications.userId, session.user.id),
+      ),
+    );
+
+  revalidatePath("/notifications");
 
   return {
     success: true,

@@ -5,7 +5,6 @@ import { and, eq, gte, lt } from "drizzle-orm";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-
 import {
   habitLogs,
   habits,
@@ -13,11 +12,11 @@ import {
   goals,
   notifications,
 } from "@/drizzle/schema";
-
 import { publishRealtimeEvent } from "@/lib/realtime/publisher";
 import { CHANNELS } from "@/lib/realtime/channels";
 import { analyticsQueue } from "@/jobs/queues/analytics.queue";
 import { redis } from "@/lib/redis";
+import { checkAchievements } from "@/lib/achievements/checkAchievements";
 
 function isSameDay(date1: Date, date2: Date) {
   return (
@@ -47,14 +46,11 @@ export async function completeHabit(habitId: string) {
   const userId = session.user.id;
 
   try {
-    /*
-     * --------------------------------------------------
-     * 1. Verify habit belongs to current user
-     * --------------------------------------------------
-     */
-
     const habit = await db.query.habits.findFirst({
-      where: and(eq(habits.id, habitId), eq(habits.userId, userId)),
+      where: and(
+        eq(habits.id, habitId),
+        eq(habits.userId, userId),
+      ),
     });
 
     if (!habit) {
@@ -66,42 +62,29 @@ export async function completeHabit(habitId: string) {
 
     const today = new Date();
 
-    /*
-     * --------------------------------------------------
-     * 2. Check if habit is already completed today
-     * --------------------------------------------------
-     */
-
     const startOfDay = new Date(today);
-
     startOfDay.setHours(0, 0, 0, 0);
 
     const endOfDay = new Date(today);
-
     endOfDay.setHours(23, 59, 59, 999);
 
     const existing = await db.query.habitLogs.findFirst({
       where: and(
         eq(habitLogs.habitId, habitId),
         eq(habitLogs.userId, userId),
-        eq(habitLogs.completed, true),
         gte(habitLogs.completedAt, startOfDay),
         lt(habitLogs.completedAt, endOfDay),
       ),
     });
 
-    if (existing) {
+    if (existing && isSameDay(existing.completedAt, today)) {
       return {
         success: false,
         message: "Already completed today",
       };
     }
 
-    /*
-     * --------------------------------------------------
-     * 3. Create habit completion log
-     * --------------------------------------------------
-     */
+    // 1. Create habit log
 
     await db.insert(habitLogs).values({
       id: crypto.randomUUID(),
@@ -111,12 +94,6 @@ export async function completeHabit(habitId: string) {
       completedAt: today,
     });
 
-    /*
-     * --------------------------------------------------
-     * 4. Publish realtime event
-     * --------------------------------------------------
-     */
-
     await publishRealtimeEvent(CHANNELS.HABIT_COMPLETED, {
       userId,
       type: CHANNELS.HABIT_COMPLETED,
@@ -125,15 +102,14 @@ export async function completeHabit(habitId: string) {
       },
     });
 
-    /*
-     * --------------------------------------------------
-     * 5. Update streak
-     * --------------------------------------------------
-     */
+    // 2. Update streak
 
     const streak = await db.query.streaks.findFirst({
-      where: and(eq(streaks.habitId, habitId), eq(streaks.userId, userId)),
+      where: eq(streaks.habitId, habitId),
     });
+
+    let finalCurrentStreak = 1;
+    let finalLongestStreak = 1;
 
     if (!streak) {
       await db.insert(streaks).values({
@@ -158,7 +134,13 @@ export async function completeHabit(habitId: string) {
         newCurrentStreak = 1;
       }
 
-      const newLongestStreak = Math.max(streak.longestStreak, newCurrentStreak);
+      const newLongestStreak = Math.max(
+        streak.longestStreak,
+        newCurrentStreak,
+      );
+
+      finalCurrentStreak = newCurrentStreak;
+      finalLongestStreak = newLongestStreak;
 
       await db
         .update(streaks)
@@ -169,139 +151,113 @@ export async function completeHabit(habitId: string) {
           lastCompletedAt: today,
           updatedAt: today,
         })
-        .where(and(eq(streaks.habitId, habitId), eq(streaks.userId, userId)));
+        .where(eq(streaks.habitId, habitId));
     }
 
-    /*
-     * --------------------------------------------------
-     * 6. Update goal belonging to THIS habit
-     * --------------------------------------------------
-     */
+    // 3. Check achievements
+
+    const unlockedBadges = await checkAchievements({
+      userId,
+      currentStreak: finalCurrentStreak,
+      longestStreak: finalLongestStreak,
+    });
+
+    // 4. Create achievement notifications
+
+    for (const badge of unlockedBadges) {
+      await db.insert(notifications).values({
+        id: crypto.randomUUID(),
+        userId,
+        title: "🏆 Achievement Unlocked!",
+        message: `You earned the "${badge.name}" badge.`,
+        category: "achievement",
+        actionUrl: "/achievements",
+      });
+    }
+
+    // 5. Update active goal
 
     const activeGoal = await db.query.goals.findFirst({
       where: and(
         eq(goals.userId, userId),
-        eq(goals.habitId, habitId),
         eq(goals.status, "active"),
       ),
     });
 
     if (activeGoal) {
-      /*
-       * Count actual completed logs instead of simply
-       * incrementing currentValue.
-       *
-       * This keeps the goal synchronized with habit logs.
-       */
+      const newCurrentValue =
+        activeGoal.currentValue + 1;
 
-      const completedLogs = await db.query.habitLogs.findMany({
-        where: and(
-          eq(habitLogs.userId, userId),
-          eq(habitLogs.habitId, habitId),
-          eq(habitLogs.completed, true),
-        ),
-      });
-
-      const currentValue = completedLogs.length;
-
-      const goalCompleted = currentValue >= activeGoal.targetValue;
+      const goalCompleted =
+        newCurrentValue >= activeGoal.targetValue;
 
       await db
         .update(goals)
         .set({
-          currentValue: Math.min(currentValue, activeGoal.targetValue),
-
-          status: goalCompleted ? "completed" : "active",
-
+          currentValue: Math.min(
+            newCurrentValue,
+            activeGoal.targetValue,
+          ),
+          status: goalCompleted
+            ? "completed"
+            : "active",
           updatedAt: today,
         })
-        .where(and(eq(goals.id, activeGoal.id), eq(goals.userId, userId)));
-
-      /*
-       * Create notification only when goal
-       * becomes completed.
-       */
+        .where(eq(goals.id, activeGoal.id));
 
       if (goalCompleted) {
         await db.insert(notifications).values({
           id: crypto.randomUUID(),
-
           userId,
-
-          title: "Goal Completed 🎉",
-
+          title: "🎯 Goal Completed!",
           message: `Congratulations! You completed your goal "${activeGoal.title}".`,
-
           category: "achievement",
-
           actionUrl: "/goals",
-
-          createdAt: today,
         });
       }
     }
 
-    /*
-     * --------------------------------------------------
-     * 7. Clear AI report cache
-     * --------------------------------------------------
-     */
+    // 6. Clear cache
 
     const aiReportCacheKey = `ai:report:${userId}`;
 
     try {
       await redis.del(aiReportCacheKey);
     } catch (error) {
-      console.error("Failed to clear AI cache:", error);
+      console.error(
+        "Failed to clear caches:",
+        error,
+      );
     }
 
-    /*
-     * --------------------------------------------------
-     * 8. Update analytics queue
-     * --------------------------------------------------
-     */
+    // 7. Analytics job
 
     await analyticsQueue.add("update-analytics", {
       userId,
       habitId,
     });
 
-    /*
-     * --------------------------------------------------
-     * 9. Revalidate pages
-     * --------------------------------------------------
-     */
+    // 8. Revalidate pages
 
     revalidatePath("/dashboard");
-
     revalidatePath("/habits");
-
     revalidatePath(`/habits/${habitId}`);
-
-    revalidatePath("/analytics");
-
-    revalidatePath("/insights");
-
-    revalidatePath("/recommendations");
-
     revalidatePath("/goals");
-
     revalidatePath("/notifications");
-
-    revalidatePath("/streaks");
-
-    /*
-     * --------------------------------------------------
-     * 10. Return success
-     * --------------------------------------------------
-     */
+    revalidatePath("/achievements");
 
     return {
       success: true,
       message: "Habit completed",
+      unlockedBadges: unlockedBadges.map(
+        (badge) => badge.name,
+      ),
     };
   } catch (error) {
-    console.error("Complete Habit Error:", error);
+    console.error(
+      "Complete Habit Error",
+      error,
+    );
 
     return {
       success: false,

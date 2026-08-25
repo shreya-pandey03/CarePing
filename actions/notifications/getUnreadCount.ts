@@ -6,28 +6,24 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { notifications } from "@/drizzle/schema";
 
-export async function markNotificationAsRead(
-  notificationId: string,
-) {
+export async function getUnreadNotificationCount() {
   const session = await auth();
 
   if (!session?.user?.id) {
-    throw new Error("Unauthorized");
+    return 0;
   }
 
-  await db
-    .update(notifications)
-    .set({
-      isRead: true,
+  const result = await db
+    .select({
+      id: notifications.id,
     })
+    .from(notifications)
     .where(
       and(
-        eq(notifications.id, notificationId),
         eq(notifications.userId, session.user.id),
+        eq(notifications.isRead, false),
       ),
     );
 
-  return {
-    success: true,
-  };
+  return result.length;
 }

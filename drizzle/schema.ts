@@ -11,7 +11,6 @@ import {
   real,
   json,
 } from "drizzle-orm/pg-core";
-
 import { InferSelectModel, InferInsertModel } from "drizzle-orm";
 
 export const habitFrequency = pgEnum("habit_frequency", [
@@ -376,8 +375,6 @@ export const goals = pgTable(
   },
   (table) => ({
     userIdx: index("goal_user_idx").on(table.userId),
-
-    // NEW
     habitIdx: index("goal_habit_idx").on(table.habitId),
   }),
 );
@@ -431,7 +428,6 @@ export const habitCorrelations = pgTable("habit_correlations", {
 
 export type Habit = InferSelectModel<typeof habits>;
 export type NewHabit = InferInsertModel<typeof habits>;
-
 export type HabitLog = InferSelectModel<typeof habitLogs>;
 export type NewHabitLog = InferInsertModel<typeof habitLogs>;
 export type Streak = InferSelectModel<typeof streaks>;
