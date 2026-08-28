@@ -8,4 +8,6 @@ export const CHANNELS = {
   ANALYTICS_UPDATED: "analytics.updated",
   INSIGHTS_UPDATED: "insights.updated",
   RECOMMENDATIONS_UPDATED: "recommendations.updated",
+
+  NOTIFICATION_CREATED: "notification.created",
 } as const;

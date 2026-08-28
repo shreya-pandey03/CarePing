@@ -10,13 +10,14 @@ import {
   habits,
   streaks,
   goals,
-  notifications,
 } from "@/drizzle/schema";
 import { publishRealtimeEvent } from "@/lib/realtime/publisher";
 import { CHANNELS } from "@/lib/realtime/channels";
 import { analyticsQueue } from "@/jobs/queues/analytics.queue";
 import { redis } from "@/lib/redis";
 import { checkAchievements } from "@/lib/achievements/checkAchievements";
+import { createNotification } from "@/lib/notifications/createNotification";
+
 
 function isSameDay(date1: Date, date2: Date) {
   return (
@@ -47,10 +48,7 @@ export async function completeHabit(habitId: string) {
 
   try {
     const habit = await db.query.habits.findFirst({
-      where: and(
-        eq(habits.id, habitId),
-        eq(habits.userId, userId),
-      ),
+      where: and(eq(habits.id, habitId), eq(habits.userId, userId)),
     });
 
     if (!habit) {
@@ -134,10 +132,7 @@ export async function completeHabit(habitId: string) {
         newCurrentStreak = 1;
       }
 
-      const newLongestStreak = Math.max(
-        streak.longestStreak,
-        newCurrentStreak,
-      );
+      const newLongestStreak = Math.max(streak.longestStreak, newCurrentStreak);
 
       finalCurrentStreak = newCurrentStreak;
       finalLongestStreak = newLongestStreak;
@@ -165,8 +160,7 @@ export async function completeHabit(habitId: string) {
     // 4. Create achievement notifications
 
     for (const badge of unlockedBadges) {
-      await db.insert(notifications).values({
-        id: crypto.randomUUID(),
+      await createNotification({
         userId,
         title: "🏆 Achievement Unlocked!",
         message: `You earned the "${badge.name}" badge.`,
@@ -178,38 +172,27 @@ export async function completeHabit(habitId: string) {
     // 5. Update active goal
 
     const activeGoal = await db.query.goals.findFirst({
-      where: and(
-        eq(goals.userId, userId),
-        eq(goals.status, "active"),
-      ),
+      where: and(eq(goals.userId, userId), eq(goals.status, "active")),
     });
 
     if (activeGoal) {
-      const newCurrentValue =
-        activeGoal.currentValue + 1;
+      const newCurrentValue = activeGoal.currentValue + 1;
 
-      const goalCompleted =
-        newCurrentValue >= activeGoal.targetValue;
+      const goalCompleted = newCurrentValue >= activeGoal.targetValue;
 
       await db
         .update(goals)
         .set({
-          currentValue: Math.min(
-            newCurrentValue,
-            activeGoal.targetValue,
-          ),
-          status: goalCompleted
-            ? "completed"
-            : "active",
+          currentValue: Math.min(newCurrentValue, activeGoal.targetValue),
+          status: goalCompleted ? "completed" : "active",
           updatedAt: today,
         })
         .where(eq(goals.id, activeGoal.id));
 
       if (goalCompleted) {
-        await db.insert(notifications).values({
-          id: crypto.randomUUID(),
+        await createNotification({
           userId,
-          title: "🎯 Goal Completed!",
+          title: " Goal Completed!",
           message: `Congratulations! You completed your goal "${activeGoal.title}".`,
           category: "achievement",
           actionUrl: "/goals",
@@ -224,10 +207,7 @@ export async function completeHabit(habitId: string) {
     try {
       await redis.del(aiReportCacheKey);
     } catch (error) {
-      console.error(
-        "Failed to clear caches:",
-        error,
-      );
+      console.error("Failed to clear caches:", error);
     }
 
     // 7. Analytics job
@@ -249,15 +229,10 @@ export async function completeHabit(habitId: string) {
     return {
       success: true,
       message: "Habit completed",
-      unlockedBadges: unlockedBadges.map(
-        (badge) => badge.name,
-      ),
+      unlockedBadges: unlockedBadges.map((badge) => badge.name),
     };
   } catch (error) {
-    console.error(
-      "Complete Habit Error",
-      error,
-    );
+    console.error("Complete Habit Error", error);
 
     return {
       success: false,

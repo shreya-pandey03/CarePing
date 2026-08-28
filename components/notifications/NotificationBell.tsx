@@ -15,6 +15,9 @@ import { getNotifications } from "@/actions/notifications/getNotifications";
 import { markNotificationRead } from "@/actions/notifications/markNotificationRead";
 import { markAllNotificationsRead } from "@/actions/notifications/markAllNotificationsRead";
 
+import { useSocket } from "@/hooks/useSocket";
+import { SOCKET_EVENTS } from "@/lib/socket/events";
+
 type Notification = {
   id: string;
   title: string;
@@ -34,20 +37,68 @@ type Notification = {
   createdAt: Date;
 };
 
+type NotificationRealtimePayload = {
+  notification: Notification;
+};
+
 export default function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  async function loadNotifications() {
-    const data = await getNotifications();
+  const socket = useSocket();
 
-    setNotifications(data);
+  async function loadNotifications() {
+    try {
+      const data = await getNotifications();
+
+      setNotifications(data);
+    } catch (error) {
+      console.error("Failed to load notifications:", error);
+    }
   }
 
+  // Load notifications from database
   useEffect(() => {
     loadNotifications();
   }, []);
+
+  // Listen for realtime notifications
+  useEffect(() => {
+    if (!socket) {
+      return;
+    }
+
+    function handleNotification(payload: NotificationRealtimePayload) {
+      console.log("REALTIME NOTIFICATION RECEIVED:", payload);
+
+      const notification = payload?.notification;
+
+      if (!notification) {
+        console.error("Invalid notification payload:", payload);
+
+        return;
+      }
+
+      setNotifications((current) => {
+        const alreadyExists = current.some(
+          (item) => item.id === notification.id,
+        );
+
+        if (alreadyExists) {
+          return current;
+        }
+
+        return [notification, ...current];
+      });
+    }
+
+    socket.on(SOCKET_EVENTS.NOTIFICATION_RECEIVED, handleNotification);
+
+    return () => {
+      socket.off(SOCKET_EVENTS.NOTIFICATION_RECEIVED, handleNotification);
+    };
+  }, [socket]);
 
   const unreadCount = notifications.filter(
     (notification) => !notification.isRead,
@@ -55,31 +106,39 @@ export default function NotificationBell() {
 
   function handleRead(id: string) {
     startTransition(async () => {
-      await markNotificationRead(id);
+      try {
+        await markNotificationRead(id);
 
-      setNotifications((current) =>
-        current.map((notification) =>
-          notification.id === id
-            ? {
-                ...notification,
-                isRead: true,
-              }
-            : notification,
-        ),
-      );
+        setNotifications((current) =>
+          current.map((notification) =>
+            notification.id === id
+              ? {
+                  ...notification,
+                  isRead: true,
+                }
+              : notification,
+          ),
+        );
+      } catch (error) {
+        console.error("Failed to mark notification as read:", error);
+      }
     });
   }
 
   function handleMarkAllRead() {
     startTransition(async () => {
-      await markAllNotificationsRead();
+      try {
+        await markAllNotificationsRead();
 
-      setNotifications((current) =>
-        current.map((notification) => ({
-          ...notification,
-          isRead: true,
-        })),
-      );
+        setNotifications((current) =>
+          current.map((notification) => ({
+            ...notification,
+            isRead: true,
+          })),
+        );
+      } catch (error) {
+        console.error("Failed to mark all notifications as read:", error);
+      }
     });
   }
 
@@ -188,6 +247,7 @@ export default function NotificationBell() {
                           size="sm"
                           className="h-7 px-2 text-xs"
                           onClick={() => handleRead(notification.id)}
+                          disabled={isPending}
                         >
                           <Check className="mr-1 h-3 w-3" />
                           Mark read
@@ -199,9 +259,11 @@ export default function NotificationBell() {
                           variant="ghost"
                           size="sm"
                           className="h-7 px-2 text-xs"
-                          onClick={() => handleRead(notification.id)}
                         >
-                          <Link href={notification.actionUrl}>
+                          <Link
+                            href={notification.actionUrl}
+                            onClick={() => handleRead(notification.id)}
+                          >
                             <ExternalLink className="mr-1 h-3 w-3" />
                             Open
                           </Link>

@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { notifications } from "@/drizzle/schema";
-
+import { createNotification } from "@/lib/notifications/createNotification";
 const STREAK_MILESTONES = [3, 7, 14, 30, 50, 100];
 
 export async function createStreakMilestoneNotification({
@@ -18,12 +18,11 @@ export async function createStreakMilestoneNotification({
     return;
   }
 
-  await db.insert(notifications).values({
-    id: crypto.randomUUID(),
+  await createNotification({
     userId,
-    title: ` ${streak}-Day Streak!`,
-    message: `Amazing! You completed "${habitTitle}" for ${streak} days in a row.`,
+    title: "Goal Completed!",
+    message: `Congratulations! Your habit "${habitTitle}" reached a ${streak}-day streak.`,
     category: "achievement",
-    actionUrl: `/habits/${habitId}`,
+    actionUrl: "/goals",
   });
 }
