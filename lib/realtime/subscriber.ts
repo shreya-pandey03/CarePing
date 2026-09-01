@@ -52,7 +52,13 @@ export async function startRealtimeSubscriber(io: Server) {
         return;
       }
 
-      io.to(userRoom(event.userId)).emit(channel, event.payload);
+      let socketEvent = channel;
+
+      if (channel === CHANNELS.NOTIFICATION_CREATED) {
+        socketEvent = "notification-received";
+      }
+
+      io.to(userRoom(event.userId)).emit(socketEvent, event.payload);
     } catch (error) {
       console.error("Failed to process realtime message:", error);
     }

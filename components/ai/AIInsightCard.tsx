@@ -1,64 +1,65 @@
 "use client";
 
-import { Sparkles, TrendingUp } from "lucide-react";
+import { AlertTriangle, Sparkles, TrendingUp } from "lucide-react";
 
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
 
 import { Badge } from "@/components/ui/badge";
 
 interface AIInsightCardProps {
   title: string;
-  summary: string;
-  confidence: number;
-  createdAt: Date;
+  description: string;
+  type: "positive" | "warning" | "neutral";
 }
 
 export default function AIInsightCard({
   title,
-  summary,
-  confidence,
-  createdAt,
+  description,
+  type,
 }: AIInsightCardProps) {
+  const icon =
+    type === "warning" ? (
+      <AlertTriangle className="h-5 w-5 text-yellow-500" />
+    ) : type === "positive" ? (
+      <TrendingUp className="h-5 w-5 text-green-500" />
+    ) : (
+      <Sparkles className="h-5 w-5 text-violet-500" />
+    );
+
+  const label =
+    type === "positive"
+      ? "Positive"
+      : type === "warning"
+        ? "Needs Attention"
+        : "Insight";
+
   return (
-    <Card className="border-violet-200">
+    <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between gap-4">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-violet-500" />
+              {icon}
               {title}
             </CardTitle>
 
-            <CardDescription>AI Generated Insight</CardDescription>
+            <CardDescription className="mt-1">
+              AI-generated insight
+            </CardDescription>
           </div>
 
-          <Badge className="bg-violet-500 hover:bg-violet-600">AI</Badge>
+          <Badge variant="secondary">{label}</Badge>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-5">
-        <p className="leading-7 text-muted-foreground">{summary}</p>
-
-        <div className="flex items-center justify-between rounded-lg border p-4">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-green-500" />
-
-            <span className="font-medium">Confidence</span>
-          </div>
-
-          <Badge variant="secondary">{confidence}%</Badge>
-        </div>
-
-        <p suppressHydrationWarning>
-          Generated on {createdAt.toLocaleDateString()} at{" "}
-          {createdAt.toLocaleTimeString()}
-        </p>
+      <CardContent>
+        <p className="leading-7 text-muted-foreground">{description}</p>
       </CardContent>
     </Card>
   );

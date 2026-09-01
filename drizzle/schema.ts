@@ -10,6 +10,8 @@ import {
   uniqueIndex,
   real,
   json,
+  jsonb,
+  uuid,
 } from "drizzle-orm/pg-core";
 import { InferSelectModel, InferInsertModel } from "drizzle-orm";
 
@@ -114,19 +116,39 @@ export const monthlyReports = pgTable("monthly_reports", {
   generatedAt: timestamp("generated_at").defaultNow().notNull(),
 });
 
-export const aiInsights = pgTable("ai_insights", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
-    .references(() => users.id, {
-      onDelete: "cascade",
-    })
-    .notNull(),
-  title: text("title").notNull(),
-  summary: text("summary").notNull(),
-  content: text("content").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  metadata: json("metadata"),
-});
+export const aiInsights = pgTable(
+  "ai_insights",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    summary: text("summary").notNull(),
+    insights: jsonb("insights")
+      .$type<
+        Array<{
+          title: string;
+          description: string;
+          type: "positive" | "warning" | "neutral";
+        }>
+      >()
+      .notNull(),
+    recommendations: jsonb("recommendations")
+      .$type<
+        Array<{
+          title: string;
+          description: string;
+        }>
+      >()
+      .notNull(),
+    generatedAt: timestamp("generated_at").defaultNow().notNull(),
+    expiresAt: timestamp("expires_at"),
+  },
+  (table) => [
+    index("ai_insights_user_id_idx").on(table.userId),
+    index("ai_insights_generated_at_idx").on(table.generatedAt),
+  ],
+);
 
 export const weeklyReports = pgTable("weekly_reports", {
   id: text("id")

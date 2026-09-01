@@ -1,4 +1,4 @@
-import { Habit, HabitLog, Streak } from "@/drizzle/schema";
+import type { Habit, HabitLog, Streak } from "@/drizzle/schema";
 
 import { calculateWeeklyGrade } from "@/lib/analytics/weekly-grade";
 import { generateInsights } from "@/lib/insights/generateInsights";
@@ -32,6 +32,14 @@ export interface AIContext {
   weakestHabit: string | null;
 }
 
+function isSameDay(date1: Date, date2: Date) {
+  return (
+    date1.getFullYear() === date2.getFullYear() &&
+    date1.getMonth() === date2.getMonth() &&
+    date1.getDate() === date2.getDate()
+  );
+}
+
 export function buildAIContext(
   habits: Habit[],
   logs: HabitLog[],
@@ -39,26 +47,45 @@ export function buildAIContext(
 ): AIContext {
   const today = new Date();
 
-  const todayString = today.toDateString();
-
-  const completedToday = new Set(
-    logs
-      .filter(
-        (log) =>
-          log.completed && log.completedAt.toDateString() === todayString,
-      )
-      .map((log) => log.habitId),
-  ).size;
+  /*
+   * ---------------------------------------------------------
+   * 1. Basic habit statistics
+   * ---------------------------------------------------------
+   */
 
   const totalHabits = habits.length;
+
+  /*
+   * Find habits completed today.
+   *
+   * Set() prevents duplicate logs for the same habit
+   * from being counted more than once.
+   */
+  const completedToday = new Set(
+    logs
+      .filter((log) => log.completed && isSameDay(log.completedAt, today))
+      .map((log) => log.habitId),
+  ).size;
 
   const completionRate =
     totalHabits === 0 ? 0 : Math.round((completedToday / totalHabits) * 100);
 
+  /*
+   * ---------------------------------------------------------
+   * 2. Weekly performance
+   * ---------------------------------------------------------
+   */
+
   const weeklyGrade = calculateWeeklyGrade(habits, logs, streaks);
 
+  /*
+   * ---------------------------------------------------------
+   * 3. Habit health scores
+   * ---------------------------------------------------------
+   */
+
   const healthScores = habits.map((habit) => {
-    const streak = streaks.find((streak) => streak.habitId === habit.id);
+    const streak = streaks.find((item) => item.habitId === habit.id);
 
     const health = calculateHabitHealth(habit, logs, streak);
 
@@ -68,8 +95,14 @@ export function buildAIContext(
     };
   });
 
+  /*
+   * ---------------------------------------------------------
+   * 4. Streak risk predictions
+   * ---------------------------------------------------------
+   */
+
   const streakPredictions = habits.map((habit) => {
-    const streak = streaks.find((streak) => streak.habitId === habit.id);
+    const streak = streaks.find((item) => item.habitId === habit.id);
 
     const prediction = predictStreakRisk(habit, logs, streak);
 
@@ -79,12 +112,29 @@ export function buildAIContext(
     };
   });
 
-  const sorted = [...healthScores].sort((a, b) => b.score - a.score);
+  /*
+   * ---------------------------------------------------------
+   * 5. Strongest and weakest habits
+   * ---------------------------------------------------------
+   */
 
-  const strongestHabit = sorted.length > 0 ? sorted[0].title : null;
+  const sortedHealthScores = [...healthScores].sort(
+    (a, b) => b.score - a.score,
+  );
+
+  const strongestHabit =
+    sortedHealthScores.length > 0 ? sortedHealthScores[0].title : null;
 
   const weakestHabit =
-    sorted.length > 1 ? sorted[sorted.length - 1].title : null;
+    sortedHealthScores.length > 0
+      ? sortedHealthScores[sortedHealthScores.length - 1].title
+      : null;
+
+  /*
+   * ---------------------------------------------------------
+   * 6. Rule-based insights
+   * ---------------------------------------------------------
+   */
 
   const insights = generateInsights({
     habits,
@@ -92,15 +142,27 @@ export function buildAIContext(
     streaks,
   });
 
+  /*
+   * ---------------------------------------------------------
+   * 7. Final AI context
+   * ---------------------------------------------------------
+   */
+
   return {
     generatedAt: new Date(),
+
     completionRate,
     completedToday,
     totalHabits,
+
     weeklyGrade,
+
     healthScores,
+
     streakPredictions,
+
     insights,
+
     strongestHabit,
     weakestHabit,
   };

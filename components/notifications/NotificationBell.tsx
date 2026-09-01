@@ -151,10 +151,6 @@ export default function NotificationBell() {
       open={open}
       onOpenChange={(value) => {
         setOpen(value);
-
-        if (value) {
-          loadNotifications();
-        }
       }}
     >
       <PopoverTrigger>
@@ -197,7 +193,7 @@ export default function NotificationBell() {
           )}
         </div>
 
-        <div className="max-h-[400px] overflow-y-auto">
+        <div className="max-h-100 overflow-y-auto">
           {notifications.length === 0 ? (
             <div className="px-4 py-10 text-center">
               <Bell className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
