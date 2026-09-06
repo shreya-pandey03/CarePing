@@ -1,17 +1,21 @@
 import { Sparkles, Lightbulb, Target } from "lucide-react";
 
 import { generateAIInsights } from "@/lib/ai/generateAIInsights";
-import AIInsightCard from "@/components/ai/AIInsightCard";
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAIInsightsHistory } from "@/lib/ai/getAIInsightsHistory";
+
+import AIInsightCard from "@/components/ai/AIInsightCard";
 import AIInsightsHistory from "@/components/ai/AIInsightsHistory";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function InsightsPage() {
-  const data = await generateAIInsights();
-const history = await getAIInsightsHistory();
+  const [data, history] = await Promise.all([
+    generateAIInsights(),
+    getAIInsightsHistory(),
+  ]);
+
   return (
     <div className="space-y-6 p-6">
+      {/* Page Header */}
       <div>
         <h1 className="flex items-center gap-2 text-3xl font-bold">
           <Sparkles className="h-7 w-7" />
@@ -23,6 +27,7 @@ const history = await getAIInsightsHistory();
         </p>
       </div>
 
+      {/* AI Summary */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -38,6 +43,7 @@ const history = await getAIInsightsHistory();
         </CardContent>
       </Card>
 
+      {/* Insights */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
           <Lightbulb className="h-5 w-5" />
@@ -67,6 +73,7 @@ const history = await getAIInsightsHistory();
         )}
       </section>
 
+      {/* Recommendations */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
           <Target className="h-5 w-5" />
@@ -101,6 +108,10 @@ const history = await getAIInsightsHistory();
             ))}
           </div>
         )}
+      </section>
+
+      {/* AI History */}
+      <section>
         <AIInsightsHistory history={history} />
       </section>
     </div>
