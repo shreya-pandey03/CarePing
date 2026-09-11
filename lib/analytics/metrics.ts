@@ -25,8 +25,21 @@ export interface HabitMetrics {
 
 function startOfDay(date: Date) {
   const result = new Date(date);
+
   result.setHours(0, 0, 0, 0);
+
   return result;
+}
+
+function isSameDay(date1: Date, date2: Date) {
+  return startOfDay(date1).getTime() === startOfDay(date2).getTime();
+}
+
+function isYesterday(date: Date, today: Date) {
+  const yesterday = startOfDay(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  return startOfDay(date).getTime() === yesterday.getTime();
 }
 
 function differenceInDays(date1: Date, date2: Date) {

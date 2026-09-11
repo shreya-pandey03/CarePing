@@ -1,11 +1,13 @@
 "use server";
 
-import { and, desc, eq, gt } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { GoogleGenAI } from "@google/genai";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { redis } from "@/lib/redis";
 import { habits, habitLogs, streaks, aiInsights } from "@/drizzle/schema";
+
 import { buildAIContext } from "./context";
 import { buildInsightsPrompt } from "./prompt";
 
@@ -32,75 +34,9 @@ if (!apiKey) {
   throw new Error("GEMINI_API_KEY is not configured.");
 }
 
-const ai = new GoogleGenAI({
-  apiKey,
-});
+const ai = new GoogleGenAI({ apiKey });
 
 const CACHE_TTL = 60 * 60 * 24;
-
-function isValidInsight(item: unknown): item is AIInsight {
-  if (!item || typeof item !== "object") {
-    return false;
-  }
-
-  const value = item as Record<string, unknown>;
-
-  return (
-    typeof value.title === "string" &&
-    typeof value.description === "string" &&
-    (value.type === "positive" ||
-      value.type === "warning" ||
-      value.type === "neutral")
-  );
-}
-
-function isValidRecommendation(item: unknown): item is AIRecommendation {
-  if (!item || typeof item !== "object") {
-    return false;
-  }
-
-  const value = item as Record<string, unknown>;
-
-  return (
-    typeof value.title === "string" && typeof value.description === "string"
-  );
-}
-
-function parseAIResponse(text: string): AIInsightsResult {
-  let cleaned = text
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/\s*```$/i, "")
-    .trim();
-
-  const firstBrace = cleaned.indexOf("{");
-  const lastBrace = cleaned.lastIndexOf("}");
-
-  if (firstBrace === -1 || lastBrace === -1 || firstBrace > lastBrace) {
-    throw new Error("Gemini did not return valid JSON.");
-  }
-
-  cleaned = cleaned.slice(firstBrace, lastBrace + 1);
-  let parsed: Partial<AIInsightsResult>;
-
-  try {
-    parsed = JSON.parse(cleaned);
-  } catch {
-    throw new Error("Gemini returned malformed JSON.");
-  }
-
-  return {
-    summary: typeof parsed.summary === "string" ? parsed.summary : "",
-
-    insights: Array.isArray(parsed.insights)
-      ? parsed.insights.filter(isValidInsight)
-      : [],
-
-    recommendations: Array.isArray(parsed.recommendations)
-      ? parsed.recommendations.filter(isValidRecommendation)
-      : [],
-  };
-}
 
 export async function generateAIInsights(): Promise<AIInsightsResult> {
   const session = await auth();
@@ -110,26 +46,16 @@ export async function generateAIInsights(): Promise<AIInsightsResult> {
   }
 
   const userId = session.user.id;
+  const cacheKey = `ai-insights:${userId}`;
 
-  const now = new Date();
+  const cached = await redis.get(cacheKey);
 
-  const [cachedInsight] = await db
-    .select()
-    .from(aiInsights)
-    .where(and(eq(aiInsights.userId, userId), gt(aiInsights.expiresAt, now)))
-    .orderBy(desc(aiInsights.generatedAt))
-    .limit(1);
-
-  if (cachedInsight) {
-    return {
-      summary: cachedInsight.summary ?? "",
-      insights: Array.isArray(cachedInsight.insights)
-        ? cachedInsight.insights.filter(isValidInsight)
-        : [],
-      recommendations: Array.isArray(cachedInsight.recommendations)
-        ? cachedInsight.recommendations.filter(isValidRecommendation)
-        : [],
-    };
+  if (cached) {
+    try {
+      return JSON.parse(cached) as AIInsightsResult;
+    } catch {
+      await redis.del(cacheKey);
+    }
   }
 
   const [userHabits, userLogs, userStreaks] = await Promise.all([
@@ -162,7 +88,49 @@ export async function generateAIInsights(): Promise<AIInsightsResult> {
       throw new Error("Gemini returned an empty response.");
     }
 
-    const result = parseAIResponse(text);
+    let cleaned = text
+      .replace(/^```json\s*/i, "")
+      .replace(/^```\s*/i, "")
+      .replace(/\s*```$/i, "")
+      .trim();
+
+    const firstBrace = cleaned.indexOf("{");
+    const lastBrace = cleaned.lastIndexOf("}");
+
+    if (firstBrace === -1 || lastBrace === -1 || firstBrace > lastBrace) {
+      throw new Error("Gemini did not return valid JSON.");
+    }
+
+    cleaned = cleaned.slice(firstBrace, lastBrace + 1);
+
+    const parsed = JSON.parse(cleaned) as Partial<AIInsightsResult>;
+
+    const result: AIInsightsResult = {
+      summary: typeof parsed.summary === "string" ? parsed.summary : "",
+
+      insights: Array.isArray(parsed.insights)
+        ? parsed.insights.filter(
+            (item): item is AIInsight =>
+              !!item &&
+              typeof item === "object" &&
+              typeof item.title === "string" &&
+              typeof item.description === "string" &&
+              (item.type === "positive" ||
+                item.type === "warning" ||
+                item.type === "neutral"),
+          )
+        : [],
+
+      recommendations: Array.isArray(parsed.recommendations)
+        ? parsed.recommendations.filter(
+            (item): item is AIRecommendation =>
+              !!item &&
+              typeof item === "object" &&
+              typeof item.title === "string" &&
+              typeof item.description === "string",
+          )
+        : [],
+    };
 
     await db.insert(aiInsights).values({
       id: crypto.randomUUID(),
@@ -174,32 +142,16 @@ export async function generateAIInsights(): Promise<AIInsightsResult> {
       expiresAt: new Date(Date.now() + CACHE_TTL * 1000),
     });
 
+    await redis.set(cacheKey, JSON.stringify(result), "EX", CACHE_TTL);
+
     return result;
-  } catch (error: unknown) {
+  } catch (error) {
     console.error("AI Insights Generation Error:", error);
 
-    const status =
-      typeof error === "object" && error !== null && "status" in error
-        ? (error as { status?: number }).status
-        : undefined;
-
-    const message = error instanceof Error ? error.message : "";
-
-    if (
-      status === 429 ||
-      message.includes("429") ||
-      message.includes("RESOURCE_EXHAUSTED") ||
-      message.includes("quota")
-    ) {
-      throw new Error(
-        "Gemini API quota exceeded. Please try again later or check your Gemini API billing and usage limits.",
-      );
+    if (error instanceof Error) {
+      throw error;
     }
 
-    throw new Error(
-      error instanceof Error
-        ? error.message
-        : "Failed to generate AI insights.",
-    );
+    throw new Error("Failed to generate AI insights.");
   }
 }

@@ -5,19 +5,13 @@ import { and, eq, gte, lt } from "drizzle-orm";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import {
-  habitLogs,
-  habits,
-  streaks,
-  goals,
-} from "@/drizzle/schema";
+import { habitLogs, habits, streaks, goals } from "@/drizzle/schema";
 import { publishRealtimeEvent } from "@/lib/realtime/publisher";
 import { CHANNELS } from "@/lib/realtime/channels";
 import { analyticsQueue } from "@/jobs/queues/analytics.queue";
 import { redis } from "@/lib/redis";
 import { checkAchievements } from "@/lib/achievements/checkAchievements";
 import { createNotification } from "@/lib/notifications/createNotification";
-
 
 function isSameDay(date1: Date, date2: Date) {
   return (
@@ -101,9 +95,8 @@ export async function completeHabit(habitId: string) {
     });
 
     // 2. Update streak
-
     const streak = await db.query.streaks.findFirst({
-      where: eq(streaks.habitId, habitId),
+      where: and(eq(streaks.habitId, habitId), eq(streaks.userId, userId)),
     });
 
     let finalCurrentStreak = 1;
@@ -118,18 +111,22 @@ export async function completeHabit(habitId: string) {
         longestStreak: 1,
         totalCompletions: 1,
         lastCompletedAt: today,
+        updatedAt: today,
       });
     } else {
-      let newCurrentStreak = streak.currentStreak;
+      let newCurrentStreak = 1;
 
-      if (!streak.lastCompletedAt) {
-        newCurrentStreak = 1;
-      } else if (isYesterday(streak.lastCompletedAt, today)) {
-        newCurrentStreak += 1;
-      } else if (isSameDay(streak.lastCompletedAt, today)) {
-        newCurrentStreak = streak.currentStreak;
-      } else {
-        newCurrentStreak = 1;
+      if (streak.lastCompletedAt) {
+        if (isSameDay(streak.lastCompletedAt, today)) {
+          return {
+            success: false,
+            message: "Already completed today",
+          };
+        }
+
+        if (isYesterday(streak.lastCompletedAt, today)) {
+          newCurrentStreak = streak.currentStreak + 1;
+        }
       }
 
       const newLongestStreak = Math.max(streak.longestStreak, newCurrentStreak);
@@ -146,7 +143,7 @@ export async function completeHabit(habitId: string) {
           lastCompletedAt: today,
           updatedAt: today,
         })
-        .where(eq(streaks.habitId, habitId));
+        .where(and(eq(streaks.habitId, habitId), eq(streaks.userId, userId)));
     }
 
     // 3. Check achievements
@@ -200,14 +197,14 @@ export async function completeHabit(habitId: string) {
       }
     }
 
-    // 6. Clear cache
+    // 6. Clear AI insights cache
 
-    const aiReportCacheKey = `ai:report:${userId}`;
+    const aiInsightsCacheKey = `ai-insights:${userId}`;
 
     try {
-      await redis.del(aiReportCacheKey);
+      await redis.del(aiInsightsCacheKey);
     } catch (error) {
-      console.error("Failed to clear caches:", error);
+      console.error("Failed to clear AI insights cache:", error);
     }
 
     // 7. Analytics job
