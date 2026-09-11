@@ -81,7 +81,6 @@ function parseAIResponse(text: string): AIInsightsResult {
   }
 
   cleaned = cleaned.slice(firstBrace, lastBrace + 1);
-
   let parsed: Partial<AIInsightsResult>;
 
   try {

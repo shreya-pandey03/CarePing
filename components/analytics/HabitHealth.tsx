@@ -14,7 +14,6 @@ interface HabitHealth {
   score: number;
 
   status: "Excellent" | "Good" | "Needs Attention";
-
   completionRate: number;
 
   currentStreak: number;

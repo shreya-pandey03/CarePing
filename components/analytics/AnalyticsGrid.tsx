@@ -9,7 +9,6 @@ export default function AnalyticsGrid({ stats, weekly, monthly }: any) {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <WeeklyOverview weekly={weekly} />
-
         <MonthlyOverview monthly={monthly} />
       </div>
     </div>

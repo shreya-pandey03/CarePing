@@ -46,7 +46,6 @@ export function buildAIContext(
   streaks: Streak[],
 ): AIContext {
   const today = new Date();
-
   /*
    * ---------------------------------------------------------
    * 1. Basic habit statistics

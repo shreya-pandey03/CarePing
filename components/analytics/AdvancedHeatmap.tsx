@@ -27,7 +27,6 @@ export default function AdvancedHeatmap({ data }: Props) {
 
   const getLevel = (completionRate: number) => {
     if (completionRate === 0) return "bg-muted";
-
     if (completionRate < 25) return "bg-green-200";
 
     if (completionRate < 50) return "bg-green-400";

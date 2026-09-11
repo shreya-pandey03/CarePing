@@ -41,7 +41,6 @@ export default function DashboardRealtime({ userId }: DashboardRealtimeProps) {
       socket.off(SOCKET_EVENTS.HABIT_UPDATED);
 
       socket.off(SOCKET_EVENTS.HABIT_COMPLETED);
-
       socket.off(SOCKET_EVENTS.HABIT_DELETED);
     };
   }, [socket, userId, addHabit, updateHabit, removeHabit, completeHabit]);

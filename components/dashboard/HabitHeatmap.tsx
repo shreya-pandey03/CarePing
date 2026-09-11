@@ -22,7 +22,6 @@ export default function HabitHeatmap({ values }: HabitHeatmapProps) {
   const map = new Map(values.map((v) => [v.date, v.count]));
 
   const today = new Date();
-
   const start = new Date(today);
   start.setDate(today.getDate() - 364);
 

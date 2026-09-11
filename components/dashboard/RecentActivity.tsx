@@ -3,7 +3,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Badge } from "@/components/ui/badge";
-
 import { CheckCircle2, Bell, Flame, Sparkles } from "lucide-react";
 
 interface ActivityItem {

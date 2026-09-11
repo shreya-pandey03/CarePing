@@ -29,7 +29,7 @@ export default function AICoachCard({
 
         <div>
           <h3 className="font-semibold">
-            ✅ Wins
+             Wins
           </h3>
 
           <ul className="list-disc pl-5">
@@ -41,7 +41,7 @@ export default function AICoachCard({
 
         <div>
           <h3 className="font-semibold">
-            📈 Improvements
+             Improvements
           </h3>
 
           <ul className="list-disc pl-5">
