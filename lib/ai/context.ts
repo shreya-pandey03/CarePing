@@ -47,9 +47,7 @@ export function buildAIContext(
 ): AIContext {
   const today = new Date();
   /*
-   * ---------------------------------------------------------
    * 1. Basic habit statistics
-   * ---------------------------------------------------------
    */
 
   const totalHabits = habits.length;

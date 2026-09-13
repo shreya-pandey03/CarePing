@@ -5,7 +5,6 @@ export type StreakRisk = {
   habit: string;
 
   risk: "low" | "medium" | "high";
-
   score: number;
 
   recommendation: string;

@@ -8,7 +8,6 @@ import {
 async function checkQueues() {
   console.log("\nAI Queue:");
   console.log(await aiQueue.getJobCounts());
-
   console.log("\nRecommendation Queue:");
   console.log(await recommendationQueue.getJobCounts());
 

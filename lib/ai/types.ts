@@ -4,7 +4,6 @@ export interface AICoachResponse {
   wins: string[];
 
   improvements: string[];
-
   recommendations: string[];
 
   motivation: string;

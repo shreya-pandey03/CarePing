@@ -7,7 +7,6 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { redis } from "@/lib/redis";
 import { habits, habitLogs, streaks, aiInsights } from "@/drizzle/schema";
-
 import { buildAIContext } from "./context";
 import { buildInsightsPrompt } from "./prompt";
 

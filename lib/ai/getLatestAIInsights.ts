@@ -25,3 +25,4 @@ export async function getLatestAIInsights() {
 
   return result ?? null;
 }
+
