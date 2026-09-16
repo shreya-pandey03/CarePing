@@ -4,6 +4,8 @@ export type StreakPrediction = {
   habitId: string;
   habitTitle: string;
   currentStreak: number;
+  longestStreak: number;
+  totalCompletions: number;
   riskScore: number;
   riskLevel: "low" | "medium" | "high";
   predictedBreakDays: number;
@@ -17,21 +19,24 @@ export function predictStreakRisk(
   streak?: Streak,
 ): StreakPrediction {
   const currentStreak = streak?.currentStreak ?? 0;
+  const longestStreak = streak?.longestStreak ?? 0;
+  const totalCompletions = streak?.totalCompletions ?? 0;
 
-  /* Newest completion first.*/
   const habitLogs = logs
     .filter((log) => log.habitId === habit.id)
     .sort(
       (a, b) =>
-        new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime(),
+        new Date(b.completedAt).getTime() -
+        new Date(a.completedAt).getTime(),
     );
 
-  /*No completion history.*/
   if (habitLogs.length === 0) {
     return {
       habitId: habit.id,
       habitTitle: habit.title,
       currentStreak,
+      longestStreak,
+      totalCompletions,
       riskScore: 80,
       riskLevel: "high",
       predictedBreakDays: 1,
@@ -43,9 +48,6 @@ export function predictStreakRisk(
 
   const latestLog = habitLogs[0];
 
-  /*
-   * Days since the last completion.
-   */
   const daysSinceLastCompletion = Math.max(
     0,
     Math.floor(
@@ -56,20 +58,13 @@ export function predictStreakRisk(
 
   let riskScore = 0;
 
-  /** 1. RECENCY RISK*/
-
   if (daysSinceLastCompletion >= 3) {
     riskScore += 70;
   } else if (daysSinceLastCompletion === 2) {
     riskScore += 45;
   } else if (daysSinceLastCompletion === 1) {
     riskScore += 20;
-  } else {
-    // Completed today
-    riskScore += 0;
   }
-
-  /* 2. CURRENT STREAK*/
 
   if (currentStreak === 0) {
     riskScore += 20;
@@ -78,8 +73,6 @@ export function predictStreakRisk(
   } else if (currentStreak >= 7) {
     riskScore -= 8;
   }
-
-  /* 3. RECENT CONSISTENCY * Look at the last 7 days.*/
 
   const now = new Date();
 
@@ -108,9 +101,6 @@ export function predictStreakRisk(
 
   const recentConsistency = recentCompletions / 7;
 
-  /*
-   * Low consistency increases risk.
-   */
   if (recentConsistency < 0.3) {
     riskScore += 25;
   } else if (recentConsistency < 0.5) {
@@ -121,25 +111,15 @@ export function predictStreakRisk(
     riskScore -= 5;
   }
 
-  /*4. CLAMP SCORE*/
-
   riskScore = Math.max(0, Math.min(100, Math.round(riskScore)));
-
-  /*5. RISK LEVEL*/
 
   const riskLevel =
     riskScore >= 70 ? "high" : riskScore >= 40 ? "medium" : "low";
 
-  /** 6. PREDICTED BREAK*/
-
   const predictedBreakDays =
     riskLevel === "high" ? 1 : riskLevel === "medium" ? 2 : 4;
 
-  /*7.CONFIDENCE More historical data = more confidence.*/
-
   const confidence = Math.min(0.95, 0.5 + habitLogs.length * 0.02);
-
-  /*8. RECOMMENDATION*/
 
   let recommendation: string;
 
@@ -153,12 +133,12 @@ export function predictStreakRisk(
     recommendation = "Your streak looks healthy. Keep your current routine.";
   }
 
-  /*FINAL RESULT*/
-
   return {
     habitId: habit.id,
     habitTitle: habit.title,
     currentStreak,
+    longestStreak,
+    totalCompletions,
     riskScore,
     riskLevel,
     predictedBreakDays,

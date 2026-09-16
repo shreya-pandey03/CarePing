@@ -1,6 +1,6 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { GoogleGenAI } from "@google/genai";
 
 import { auth } from "@/auth";
@@ -36,8 +36,57 @@ if (!apiKey) {
 const ai = new GoogleGenAI({ apiKey });
 
 const CACHE_TTL = 60 * 60 * 24;
+const DB_REUSE_WINDOW = 60 * 60 * 1000;
 
-export async function generateAIInsights(): Promise<AIInsightsResult> {
+function parseAIResponse(text: string): AIInsightsResult {
+  let cleaned = text
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+
+  const firstBrace = cleaned.indexOf("{");
+  const lastBrace = cleaned.lastIndexOf("}");
+
+  if (firstBrace === -1 || lastBrace === -1 || firstBrace > lastBrace) {
+    throw new Error("Gemini did not return valid JSON.");
+  }
+
+  cleaned = cleaned.slice(firstBrace, lastBrace + 1);
+
+  const parsed = JSON.parse(cleaned) as Partial<AIInsightsResult>;
+
+  return {
+    summary: typeof parsed.summary === "string" ? parsed.summary : "",
+
+    insights: Array.isArray(parsed.insights)
+      ? parsed.insights.filter(
+          (item): item is AIInsight =>
+            !!item &&
+            typeof item === "object" &&
+            typeof item.title === "string" &&
+            typeof item.description === "string" &&
+            (item.type === "positive" ||
+              item.type === "warning" ||
+              item.type === "neutral"),
+        )
+      : [],
+
+    recommendations: Array.isArray(parsed.recommendations)
+      ? parsed.recommendations.filter(
+          (item): item is AIRecommendation =>
+            !!item &&
+            typeof item === "object" &&
+            typeof item.title === "string" &&
+            typeof item.description === "string",
+        )
+      : [],
+  };
+}
+
+export async function generateAIInsights(options?: {
+  force?: boolean;
+}): Promise<AIInsightsResult> {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -45,15 +94,70 @@ export async function generateAIInsights(): Promise<AIInsightsResult> {
   }
 
   const userId = session.user.id;
+  const force = options?.force ?? false;
   const cacheKey = `ai-insights:${userId}`;
 
-  const cached = await redis.get(cacheKey);
+  if (!force) {
+    const cached = await redis.get(cacheKey);
 
-  if (cached) {
-    try {
-      return JSON.parse(cached) as AIInsightsResult;
-    } catch {
-      await redis.del(cacheKey);
+    if (cached) {
+      try {
+        return JSON.parse(cached) as AIInsightsResult;
+      } catch {
+        await redis.del(cacheKey);
+      }
+    }
+
+    const latestInsight = await db
+      .select()
+      .from(aiInsights)
+      .where(eq(aiInsights.userId, userId))
+      .orderBy(desc(aiInsights.generatedAt))
+      .limit(1);
+
+    if (latestInsight.length > 0) {
+      const latest = latestInsight[0];
+
+      const generatedAt = new Date(latest.generatedAt).getTime();
+
+      const expiresAt = latest.expiresAt
+        ? new Date(latest.expiresAt).getTime()
+        : 0;
+
+      const now = Date.now();
+
+      if (now - generatedAt < DB_REUSE_WINDOW && expiresAt > now) {
+        const result: AIInsightsResult = {
+          summary: latest.summary,
+
+          insights: Array.isArray(latest.insights)
+            ? latest.insights.filter(
+                (item): item is AIInsight =>
+                  !!item &&
+                  typeof item === "object" &&
+                  typeof item.title === "string" &&
+                  typeof item.description === "string" &&
+                  (item.type === "positive" ||
+                    item.type === "warning" ||
+                    item.type === "neutral"),
+              )
+            : [],
+
+          recommendations: Array.isArray(latest.recommendations)
+            ? latest.recommendations.filter(
+                (item): item is AIRecommendation =>
+                  !!item &&
+                  typeof item === "object" &&
+                  typeof item.title === "string" &&
+                  typeof item.description === "string",
+              )
+            : [],
+        };
+
+        await redis.set(cacheKey, JSON.stringify(result), "EX", CACHE_TTL);
+
+        return result;
+      }
     }
   }
 
@@ -87,49 +191,11 @@ export async function generateAIInsights(): Promise<AIInsightsResult> {
       throw new Error("Gemini returned an empty response.");
     }
 
-    let cleaned = text
-      .replace(/^```json\s*/i, "")
-      .replace(/^```\s*/i, "")
-      .replace(/\s*```$/i, "")
-      .trim();
+    const result = parseAIResponse(text);
 
-    const firstBrace = cleaned.indexOf("{");
-    const lastBrace = cleaned.lastIndexOf("}");
+    const generatedAt = new Date();
 
-    if (firstBrace === -1 || lastBrace === -1 || firstBrace > lastBrace) {
-      throw new Error("Gemini did not return valid JSON.");
-    }
-
-    cleaned = cleaned.slice(firstBrace, lastBrace + 1);
-
-    const parsed = JSON.parse(cleaned) as Partial<AIInsightsResult>;
-
-    const result: AIInsightsResult = {
-      summary: typeof parsed.summary === "string" ? parsed.summary : "",
-
-      insights: Array.isArray(parsed.insights)
-        ? parsed.insights.filter(
-            (item): item is AIInsight =>
-              !!item &&
-              typeof item === "object" &&
-              typeof item.title === "string" &&
-              typeof item.description === "string" &&
-              (item.type === "positive" ||
-                item.type === "warning" ||
-                item.type === "neutral"),
-          )
-        : [],
-
-      recommendations: Array.isArray(parsed.recommendations)
-        ? parsed.recommendations.filter(
-            (item): item is AIRecommendation =>
-              !!item &&
-              typeof item === "object" &&
-              typeof item.title === "string" &&
-              typeof item.description === "string",
-          )
-        : [],
-    };
+    const expiresAt = new Date(generatedAt.getTime() + CACHE_TTL * 1000);
 
     await db.insert(aiInsights).values({
       id: crypto.randomUUID(),
@@ -137,8 +203,8 @@ export async function generateAIInsights(): Promise<AIInsightsResult> {
       summary: result.summary,
       insights: result.insights,
       recommendations: result.recommendations,
-      generatedAt: new Date(),
-      expiresAt: new Date(Date.now() + CACHE_TTL * 1000),
+      generatedAt,
+      expiresAt,
     });
 
     await redis.set(cacheKey, JSON.stringify(result), "EX", CACHE_TTL);

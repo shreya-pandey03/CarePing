@@ -1,5 +1,10 @@
 import type { Habit, HabitLog, Streak } from "@/drizzle/schema";
-import { startOfWeek } from "date-fns";
+import {
+  differenceInCalendarDays,
+  endOfMonth,
+  endOfWeek,
+  startOfWeek,
+} from "date-fns";
 
 export type WeeklyGrade = {
   score: number;
@@ -7,7 +12,7 @@ export type WeeklyGrade = {
   averageCompletion: number;
   completedHabits: number;
   totalHabits: number;
-  longestStreak: number;
+  weeklyLongestStreak: number;
   missedHabits: number;
   feedback: string;
 };
@@ -17,57 +22,208 @@ export function calculateWeeklyGrade(
   logs: HabitLog[],
   streaks: Streak[],
 ): WeeklyGrade {
-  const weekStart = startOfWeek(new Date());
+  const now = new Date();
+  const weekStart = startOfWeek(now);
+  const weekEnd = endOfWeek(now);
 
-  const weeklyLogs = logs.filter(
-    (log) => new Date(log.completedAt) >= weekStart,
+  const activeHabits = habits.filter(
+    (habit) => habit.active && !habit.archived,
   );
 
-  //------------------------------------------
-  // Habits completed this week
-  //------------------------------------------
+  const weeklyLogs = logs.filter((log) => {
+    const completedAt = new Date(log.completedAt);
 
-  const completedHabits = new Set(weeklyLogs.map((l) => l.habitId)).size;
+    return (
+      log.completed &&
+      completedAt >= weekStart &&
+      completedAt <= weekEnd
+    );
+  });
 
-  const totalHabits = habits.length;
+  const completedHabits = new Set(
+    weeklyLogs.map((log) => log.habitId),
+  ).size;
+
+  const totalHabits = activeHabits.length;
+
+  const daysElapsedThisWeek =
+    differenceInCalendarDays(now, weekStart) + 1;
+
+  let expectedCompletions = 0;
+  let completedCompletions = 0;
+
+  for (const habit of activeHabits) {
+    const targetDays = Math.max(1, habit.targetDays);
+
+    const completedThisWeek = new Set(
+      weeklyLogs
+        .filter((log) => log.habitId === habit.id)
+        .map((log) => {
+          const date = new Date(log.completedAt);
+          date.setHours(0, 0, 0, 0);
+          return date.getTime();
+        }),
+    ).size;
+
+    completedCompletions += completedThisWeek;
+
+    if (habit.frequency === "daily") {
+      expectedCompletions +=
+        Math.min(daysElapsedThisWeek, 7) * targetDays;
+    }
+
+    if (habit.frequency === "weekly") {
+      expectedCompletions += targetDays;
+    }
+
+    if (habit.frequency === "monthly") {
+      const daysInMonth = endOfMonth(now).getDate();
+
+      const monthProgress =
+        now.getDate() / daysInMonth;
+
+      const monthlyExpected =
+        targetDays * monthProgress;
+
+      const weekExpected = Math.min(
+        targetDays,
+        monthlyExpected,
+      );
+
+      expectedCompletions += weekExpected;
+    }
+  }
 
   const averageCompletion =
-    totalHabits === 0 ? 0 : Math.round((completedHabits / totalHabits) * 100);
+    expectedCompletions === 0
+      ? 0
+      : Math.min(
+          100,
+          Math.round(
+            (completedCompletions /
+              expectedCompletions) *
+              100,
+          ),
+        );
 
-  //------------------------------------------
-  // Longest streak
-  //------------------------------------------
+  const weeklyLongestStreak = activeHabits.reduce(
+    (maxStreak, habit) => {
+      const habitDates = weeklyLogs
+        .filter((log) => log.habitId === habit.id)
+        .map((log) => {
+          const date = new Date(log.completedAt);
+          date.setHours(0, 0, 0, 0);
+          return date.getTime();
+        });
 
-  const longestStreak = Math.max(0, ...streaks.map((s) => s.longestStreak));
+      const uniqueDates = [
+        ...new Set(habitDates),
+      ].sort((a, b) => a - b);
 
-  //------------------------------------------
-  // Missed
-  //------------------------------------------
+      let currentStreak = 0;
+      let longestStreak = 0;
 
-  const missedHabits = totalHabits - completedHabits;
+      for (let i = 0; i < uniqueDates.length; i++) {
+        if (i === 0) {
+          currentStreak = 1;
+        } else {
+          const previous = new Date(
+            uniqueDates[i - 1],
+          );
 
-  //------------------------------------------
-  // Score
-  //------------------------------------------
+          const current = new Date(
+            uniqueDates[i],
+          );
+
+          const difference =
+            differenceInCalendarDays(
+              current,
+              previous,
+            );
+
+          currentStreak =
+            difference === 1
+              ? currentStreak + 1
+              : 1;
+        }
+
+        longestStreak = Math.max(
+          longestStreak,
+          currentStreak,
+        );
+      }
+
+      return Math.max(
+        maxStreak,
+        longestStreak,
+      );
+    },
+    0,
+  );
+
+  const missedHabits = activeHabits.filter(
+    (habit) => {
+      const completedThisWeek =
+        weeklyLogs.filter(
+          (log) => log.habitId === habit.id,
+        ).length;
+
+      const targetDays = Math.max(
+        1,
+        habit.targetDays,
+      );
+
+      if (habit.frequency === "daily") {
+        const expected =
+          Math.min(daysElapsedThisWeek, 7) *
+          targetDays;
+
+        return completedThisWeek < expected;
+      }
+
+      if (habit.frequency === "weekly") {
+        return completedThisWeek < targetDays;
+      }
+
+      if (habit.frequency === "monthly") {
+        const daysInMonth =
+          endOfMonth(now).getDate();
+
+        const expected =
+          Math.min(
+            targetDays,
+            targetDays *
+              (now.getDate() /
+                daysInMonth),
+          );
+
+        return completedThisWeek < expected;
+      }
+
+      return false;
+    },
+  ).length;
 
   let score = 0;
 
-  // Completion contributes up to 60 points
-  score += averageCompletion * 0.6;
+  score += averageCompletion * 0.75;
 
-  // Longest streak contributes up to 25 points
-  score += Math.min(longestStreak * 2.5, 25);
+  score += Math.min(
+    weeklyLongestStreak * 1.5,
+    15,
+  );
 
-  // Bonus for completing all habits
-  if (completedHabits === totalHabits && totalHabits > 0) {
-    score += 15;
+  if (
+    totalHabits > 0 &&
+    missedHabits === 0
+  ) {
+    score += 10;
   }
 
-  score = Math.min(100, Math.round(score));
-
-  //------------------------------------------
-  // Grade
-  //------------------------------------------
+  score = Math.min(
+    100,
+    Math.round(score),
+  );
 
   let grade: WeeklyGrade["grade"];
 
@@ -78,38 +234,37 @@ export function calculateWeeklyGrade(
   else if (score >= 40) grade = "D";
   else grade = "F";
 
-  //------------------------------------------
-  // Feedback
-  //------------------------------------------
-
   let feedback = "";
 
   switch (grade) {
     case "A+":
-      feedback = "Outstanding week. Your habits are becoming automatic.";
+      feedback =
+        "Outstanding week. Your habits are becoming automatic.";
       break;
 
     case "A":
-      feedback = "Excellent consistency. Keep protecting your streaks.";
+      feedback =
+        "Excellent consistency. Keep protecting your streaks.";
       break;
 
     case "B":
       feedback =
-        "Good progress. Completing every habit daily will push you higher.";
+        "Good progress. Keep improving your consistency across all habits.";
       break;
 
     case "C":
-      feedback = "You're improving, but consistency needs attention.";
+      feedback =
+        "You're improving, but consistency needs attention.";
       break;
 
     case "D":
       feedback =
-        "Several habits were missed this week. Focus on one habit at a time.";
+        "Several habit targets were missed this week. Focus on building consistency.";
       break;
 
     case "F":
       feedback =
-        "Let's restart small. Completing even one habit today builds momentum.";
+        "Let's restart small. Completing your next planned habit builds momentum.";
       break;
   }
 
@@ -119,7 +274,7 @@ export function calculateWeeklyGrade(
     averageCompletion,
     completedHabits,
     totalHabits,
-    longestStreak,
+    weeklyLongestStreak,
     missedHabits,
     feedback,
   };

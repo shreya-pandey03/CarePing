@@ -1,4 +1,5 @@
 import type { Habit, HabitLog, Streak } from "@/drizzle/schema";
+import { startOfWeek } from "date-fns";
 
 import { calculateWeeklyGrade } from "@/lib/analytics/weekly-grade";
 import { generateInsights } from "@/lib/insights/generateInsights";
@@ -8,9 +9,16 @@ import { calculateHabitHealth } from "@/lib/analytics/habit-health";
 export interface AIContext {
   generatedAt: Date;
 
+  today: string;
+  weekStart: string;
+
   completionRate: number;
   completedToday: number;
   totalHabits: number;
+
+  weeklyCompletedCount: number;
+  weeklyExpectedCount: number;
+  weeklyMissedCount: number;
 
   weeklyGrade: ReturnType<typeof calculateWeeklyGrade>;
 
@@ -23,6 +31,9 @@ export interface AIContext {
   streakPredictions: Array<
     ReturnType<typeof predictStreakRisk> & {
       title: string;
+      currentStreak: number;
+      longestStreak: number;
+      totalCompletions: number;
     }
   >;
 
@@ -45,75 +56,89 @@ export function buildAIContext(
   logs: HabitLog[],
   streaks: Streak[],
 ): AIContext {
-  const today = new Date();
-  /*
-   * 1. Basic habit statistics
-   */
+  const now = new Date();
+  const weekStart = startOfWeek(now);
 
-  const totalHabits = habits.length;
+  const totalHabits = habits.filter(
+    (habit) => habit.active && !habit.archived,
+  ).length;
 
-  /*
-   * Find habits completed today.
-   *
-   * Set() prevents duplicate logs for the same habit
-   * from being counted more than once.
-   */
+  const activeHabitIds = new Set(
+    habits
+      .filter((habit) => habit.active && !habit.archived)
+      .map((habit) => habit.id),
+  );
+
   const completedToday = new Set(
     logs
-      .filter((log) => log.completed && isSameDay(log.completedAt, today))
+      .filter(
+        (log) =>
+          log.completed &&
+          activeHabitIds.has(log.habitId) &&
+          isSameDay(new Date(log.completedAt), now),
+      )
       .map((log) => log.habitId),
   ).size;
 
   const completionRate =
     totalHabits === 0 ? 0 : Math.round((completedToday / totalHabits) * 100);
 
-  /*
-   * ---------------------------------------------------------
-   * 2. Weekly performance
-   * ---------------------------------------------------------
-   */
-
   const weeklyGrade = calculateWeeklyGrade(habits, logs, streaks);
 
-  /*
-   * ---------------------------------------------------------
-   * 3. Habit health scores
-   * ---------------------------------------------------------
-   */
+  const weeklyLogs = logs.filter((log) => {
+    const completedAt = new Date(log.completedAt);
 
-  const healthScores = habits.map((habit) => {
-    const streak = streaks.find((item) => item.habitId === habit.id);
-
-    const health = calculateHabitHealth(habit, logs, streak);
-
-    return {
-      ...health,
-      title: habit.title.trim(),
-    };
+    return (
+      log.completed &&
+      activeHabitIds.has(log.habitId) &&
+      completedAt >= weekStart
+    );
   });
 
-  /*
-   * ---------------------------------------------------------
-   * 4. Streak risk predictions
-   * ---------------------------------------------------------
-   */
+  const weeklyCompletedCount = weeklyLogs.length;
 
-  const streakPredictions = habits.map((habit) => {
-    const streak = streaks.find((item) => item.habitId === habit.id);
+  const weeklyExpectedCount = Math.max(
+    0,
+    Math.round(
+      weeklyGrade.averageCompletion > 0
+        ? weeklyCompletedCount / (weeklyGrade.averageCompletion / 100)
+        : 0,
+    ),
+  );
 
-    const prediction = predictStreakRisk(habit, logs, streak);
+  const weeklyMissedCount = Math.max(
+    0,
+    weeklyExpectedCount - weeklyCompletedCount,
+  );
 
-    return {
-      ...prediction,
-      title: habit.title.trim(),
-    };
-  });
+  const healthScores = habits
+    .filter((habit) => habit.active && !habit.archived)
+    .map((habit) => {
+      const streak = streaks.find((item) => item.habitId === habit.id);
 
-  /*
-   * ---------------------------------------------------------
-   * 5. Strongest and weakest habits
-   * ---------------------------------------------------------
-   */
+      const health = calculateHabitHealth(habit, logs, streak);
+
+      return {
+        ...health,
+        title: habit.title.trim(),
+      };
+    });
+
+  const streakPredictions = habits
+    .filter((habit) => habit.active && !habit.archived)
+    .map((habit) => {
+      const streak = streaks.find((item) => item.habitId === habit.id);
+
+      const prediction = predictStreakRisk(habit, logs, streak);
+
+      return {
+        ...prediction,
+        title: habit.title.trim(),
+        currentStreak: streak?.currentStreak ?? 0,
+        longestStreak: streak?.longestStreak ?? 0,
+        totalCompletions: streak?.totalCompletions ?? 0,
+      };
+    });
 
   const sortedHealthScores = [...healthScores].sort(
     (a, b) => b.score - a.score,
@@ -127,30 +152,25 @@ export function buildAIContext(
       ? sortedHealthScores[sortedHealthScores.length - 1].title
       : null;
 
-  /*
-   * ---------------------------------------------------------
-   * 6. Rule-based insights
-   * ---------------------------------------------------------
-   */
-
   const insights = generateInsights({
     habits,
     logs,
     streaks,
   });
 
-  /*
-   * ---------------------------------------------------------
-   * 7. Final AI context
-   * ---------------------------------------------------------
-   */
-
   return {
     generatedAt: new Date(),
+
+    today: now.toISOString().split("T")[0],
+    weekStart: weekStart.toISOString().split("T")[0],
 
     completionRate,
     completedToday,
     totalHabits,
+
+    weeklyCompletedCount,
+    weeklyExpectedCount,
+    weeklyMissedCount,
 
     weeklyGrade,
 

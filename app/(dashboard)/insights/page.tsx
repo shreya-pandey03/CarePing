@@ -6,6 +6,7 @@ import { getAIInsightsHistory } from "@/lib/ai/getAIInsightsHistory";
 import AIInsightCard from "@/components/ai/AIInsightCard";
 import AIInsightsHistory from "@/components/ai/AIInsightsHistory";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import RegenerateAIInsightsButton from "@/components/ai/RegenerateAIInsightsButton";
 
 export default async function InsightsPage() {
   const [data, history] = await Promise.all([
@@ -25,6 +26,7 @@ export default async function InsightsPage() {
         <p className="mt-1 text-muted-foreground">
           Personalized insights from your habit activity.
         </p>
+         <RegenerateAIInsightsButton />
       </div>
 
       {/* AI Summary */}
