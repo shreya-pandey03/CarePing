@@ -8,7 +8,6 @@ import {
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
 import RegenerateAIRecommendationsButton from "@/components/ai/RegenerateAIRecommendationsButton";
 import { getAIRecommendations } from "@/lib/ai/getAIRecommendations";
 
