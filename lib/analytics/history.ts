@@ -17,6 +17,7 @@ export async function getCompletionHistory(userId: string) {
     where: eq(streaks.userId, userId),
   });
 
+  
   const totalHabits = userHabits.length;
   const completedHabits = logs.length;
 

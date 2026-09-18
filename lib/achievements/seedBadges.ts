@@ -57,3 +57,4 @@ export async function seedBadges() {
     await db.insert(badges).values(badge).onConflictDoNothing();
   }
 }
+

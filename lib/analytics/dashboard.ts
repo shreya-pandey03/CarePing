@@ -8,6 +8,7 @@ export async function getDashboardAnalytics(userId: string) {
     where: and(eq(habits.userId, userId), eq(habits.active, true)),
   });
 
+  
   const today = new Date();
 
   today.setHours(0, 0, 0, 0);

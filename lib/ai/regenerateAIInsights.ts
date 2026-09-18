@@ -18,3 +18,4 @@ export async function regenerateAIInsights() {
 
   return generateAIInsights();
 }
+

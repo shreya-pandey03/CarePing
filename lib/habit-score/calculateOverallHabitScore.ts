@@ -15,6 +15,7 @@ export function calculateOverallHabitScore(
       (log) => log.habitId === habit.id && log.completed,
     );
 
+    
     const streak = streaks.find((item) => item.habitId === habit.id);
 
     const completionRate = Math.min(

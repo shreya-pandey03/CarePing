@@ -42,6 +42,7 @@ function isYesterday(date: Date, today: Date) {
   return startOfDay(date).getTime() === yesterday.getTime();
 }
 
+
 function differenceInDays(date1: Date, date2: Date) {
   const first = startOfDay(date1).getTime();
   const second = startOfDay(date2).getTime();

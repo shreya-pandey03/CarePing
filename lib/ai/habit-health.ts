@@ -5,7 +5,6 @@ export type HabitHealth = {
   title: string;
 
   score: number;
-
   status: "Excellent" | "Good" | "Needs Attention";
   completionRate: number;
 

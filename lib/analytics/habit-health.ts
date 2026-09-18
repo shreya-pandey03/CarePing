@@ -20,6 +20,7 @@ export type HabitHealth = {
   recommendation: string;
 };
 
+
 function isSameDay(date1: Date, date2: Date) {
   return (
     date1.getFullYear() === date2.getFullYear() &&

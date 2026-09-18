@@ -12,6 +12,7 @@ export default async function MonthlyAnalyticsPage() {
 
   const monthly = await getMonthlyAnalytics(session.user.id);
 
+  
   return (
     <div className="space-y-8">
       <div>

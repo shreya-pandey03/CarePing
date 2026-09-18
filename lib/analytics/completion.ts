@@ -3,3 +3,4 @@ export function calculateCompletionRate(completed: number, total: number) {
 
   return Math.round((completed / total) * 100);
 }
+

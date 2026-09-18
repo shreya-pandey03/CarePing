@@ -13,6 +13,7 @@ export function calculateHabitScore(input: HabitScoreInput): HabitScore {
 
   const completionScore = Math.min(Math.max(completionRate, 0), 100);
 
+  
   const consistencyScore =
     longestStreak > 0
       ? Math.min((currentStreak / longestStreak) * 100, 100)

@@ -45,6 +45,7 @@ export default async function HabitDetailsPage({ params }: PageProps) {
     orderBy: (habitLogs, { desc }) => [desc(habitLogs.completedAt)],
   });
 
+  
   // Get Streak
   const streak = await db.query.streaks.findFirst({
     where: eq(streaks.habitId, habitId),

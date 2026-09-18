@@ -10,6 +10,7 @@ import BadgeCard from "@/components/achievements/BadgeCard";
 export default async function AchievementsPage() {
   const session = await auth();
 
+  
   if (!session?.user?.id) {
     redirect("/login");
   }

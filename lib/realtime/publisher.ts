@@ -8,3 +8,4 @@ export async function publishRealtimeEvent<T>(
 ) {
   await redis.publish(channel, JSON.stringify(event));
 }
+

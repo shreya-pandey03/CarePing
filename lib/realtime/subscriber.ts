@@ -52,6 +52,7 @@ export async function startRealtimeSubscriber(io: Server) {
         return;
       }
 
+      
       let socketEvent = channel;
 
       if (channel === CHANNELS.NOTIFICATION_CREATED) {
