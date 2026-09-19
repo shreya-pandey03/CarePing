@@ -10,7 +10,6 @@ import {
   CardContent,
   CardDescription,
 } from "@/components/ui/card";
-
 import { Button } from "@/components/ui/button";
 
 export default function RegisterPage() {

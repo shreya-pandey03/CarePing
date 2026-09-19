@@ -15,7 +15,6 @@ interface PageProps {
   }>;
 }
 
-
 export default async function EditHabitPage({ params }: PageProps) {
   const session = await auth();
 

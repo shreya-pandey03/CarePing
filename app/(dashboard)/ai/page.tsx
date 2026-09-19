@@ -4,7 +4,6 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
-
 import {
   aiInsights,
   recommendations,

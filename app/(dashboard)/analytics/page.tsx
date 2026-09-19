@@ -9,7 +9,6 @@ import { getDashboardAnalytics } from "@/lib/analytics/dashboard";
 import { getWeeklyAnalytics } from "@/lib/analytics/weekly";
 import { getMonthlyAnalytics } from "@/lib/analytics/monthly";
 import { getCompletionHistory } from "@/lib/analytics/history";
-
 import {
   getWeeklyHistory,
   getMonthlyHistory,

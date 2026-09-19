@@ -16,7 +16,6 @@ export default async function AchievementsPage() {
   }
 
   const allBadges = await db.query.badges.findMany();
-
   const earnedBadges = await db.query.userBadges.findMany({
     where: eq(userBadges.userId, session.user.id),
   });

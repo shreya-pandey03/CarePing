@@ -12,7 +12,6 @@ export default async function WeeklyAnalyticsPage() {
 
   const weekly = await getWeeklyAnalytics(session.user.id);
 
-  
   return (
     <div className="space-y-8">
       <div>
