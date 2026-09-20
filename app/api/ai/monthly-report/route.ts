@@ -17,7 +17,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error("MONTHLY REPORT ERROR:", error);
-
     
     return NextResponse.json(
       { error: "Failed to fetch monthly report" },

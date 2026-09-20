@@ -12,6 +12,7 @@ export async function POST(request: Request) {
 
     const body = await request.json().catch(() => ({}));
 
+    
     return NextResponse.json({
       success: true,
       userId: session.user.id,

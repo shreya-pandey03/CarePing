@@ -18,6 +18,7 @@ export async function GET() {
   } catch (error) {
     console.error("WEEKLY REPORT ERROR:", error);
 
+    
     return NextResponse.json(
       { error: "Failed to generate weekly report" },
       { status: 500 },

@@ -13,8 +13,7 @@ export async function GET() {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    
+ 
     const userId = session.user.id;
 
     const [userHabits, logs, userStreaks] = await Promise.all([

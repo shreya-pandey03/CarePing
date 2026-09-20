@@ -13,6 +13,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    
     const userHabits = await db.query.habits.findMany({
       where: eq(habits.userId, session.user.id),
     });

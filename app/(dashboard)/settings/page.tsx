@@ -13,6 +13,7 @@ export default async function SettingsPage() {
     redirect("/login");
   }
 
+  
   return (
     <div className="mx-auto max-w-5xl space-y-8">
       <div>

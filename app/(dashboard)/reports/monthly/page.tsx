@@ -15,6 +15,7 @@ export default async function MonthlyReportsPage() {
     redirect("/login");
   }
 
+  
   const reports = await db.query.monthlyReports.findMany({
     where: eq(monthlyReports.userId, session.user.id),
     orderBy: (table, { desc }) => [desc(table.generatedAt)],

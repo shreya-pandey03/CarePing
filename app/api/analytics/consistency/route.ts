@@ -14,6 +14,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    
     const userStreaks = await db.query.streaks.findMany({
       where: eq(streaks.userId, session.user.id),
     });

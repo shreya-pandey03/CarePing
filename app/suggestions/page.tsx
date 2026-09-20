@@ -8,6 +8,7 @@ import { calculateHabitPerformance } from "@/lib/habit-performance";
 import { generateRecommendations } from "@/lib/recommendations/generateRecommendations";
 import RecommendationsList from "@/components/recommendations/RecommendationsList";
 
+
 export default async function RecommendationsPage() {
   const session = await auth();
 

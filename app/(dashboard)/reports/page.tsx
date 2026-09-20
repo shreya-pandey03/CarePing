@@ -18,7 +18,6 @@ export default function ReportsPage() {
             Review your weekly habit progress and AI insights.
           </p>
         </a>
-
         <a
           href="/reports/monthly"
           className="rounded-lg border p-6 hover:bg-muted transition-colors"

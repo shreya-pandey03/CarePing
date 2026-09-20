@@ -17,6 +17,7 @@ export default async function WeeklyReportsPage() {
     orderBy: (table, { desc }) => [desc(table.generatedAt)],
   });
 
+  
   return (
     <div className="space-y-8">
       <div>
