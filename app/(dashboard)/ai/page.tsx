@@ -20,6 +20,7 @@ import StreakPrediction from "@/components/ai/StreakPrediction";
 import MotivationCard from "@/components/ai/MotivationCard";
 import { predictStreakRisk } from "@/lib/analytics/streak-prediction";
 
+
 export default async function AIPage() {
   const session = await auth();
 

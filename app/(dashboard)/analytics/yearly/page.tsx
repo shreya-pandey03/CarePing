@@ -11,7 +11,6 @@ export default async function YearlyAnalyticsPage() {
 
   const yearly = await getYearlyAnalytics(session.user.id);
 
-  
   return (
     <div className="space-y-8">
       <div>

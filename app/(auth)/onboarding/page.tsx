@@ -62,3 +62,4 @@ export default function OnboardingPage() {
     </Card>
   );
 }
+
