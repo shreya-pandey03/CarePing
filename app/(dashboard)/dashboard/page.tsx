@@ -30,8 +30,7 @@ export default async function DashboardPage() {
   }
 
   const userId = session.user.id;
-
-  
+ 
   // Load User Data
 
   const userHabits = await db.query.habits.findMany({

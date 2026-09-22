@@ -17,8 +17,7 @@ export default async function HabitsPage() {
   if (!session?.user?.id) {
     redirect("/login");
   }
-
-  
+ 
   const userId = session.user.id;
 
   const userHabits = await db.query.habits.findMany({

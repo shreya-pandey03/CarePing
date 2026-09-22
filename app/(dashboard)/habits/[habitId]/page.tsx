@@ -57,7 +57,6 @@ export default async function HabitDetailsPage({ params }: PageProps) {
     return log.completedAt.toDateString() === today.toDateString();
   });
 
-  
   const progress =
     logs.length === 0 ? 0 : Math.min((logs.length / 30) * 100, 100);
 
