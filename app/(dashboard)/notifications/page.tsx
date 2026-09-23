@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import NotificationCard from "@/components/notifications/NotificationCard";
 import MarkAllAsReadButton from "@/components/notifications/MarkAllAsReadButton";
 
+
 export default async function NotificationsPage() {
   const session = await auth();
 

@@ -29,7 +29,6 @@ export default async function InsightsPage() {
          <RegenerateAIInsightsButton />
       </div>
 
-
       {/* AI Summary */}
       <Card>
         <CardHeader>

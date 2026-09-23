@@ -16,6 +16,7 @@ export default async function GoalsPage() {
     redirect("/login");
   }
 
+  
   const userGoals = await db.query.goals.findMany({
     where: eq(goals.userId, session.user.id),
     orderBy: [desc(goals.createdAt)],
