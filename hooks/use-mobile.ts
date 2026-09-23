@@ -9,6 +9,7 @@ export function useMobile() {
     undefined,
   );
 
+  
   React.useEffect(() => {
     const mediaQuery = window.matchMedia(
       `(max-width: ${MOBILE_BREAKPOINT - 1}px)`,

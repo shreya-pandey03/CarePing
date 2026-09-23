@@ -13,6 +13,7 @@ export interface DashboardData {
   recommendations: unknown[];
 }
 
+
 export function useDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
 

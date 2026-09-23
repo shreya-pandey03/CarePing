@@ -9,6 +9,7 @@ import {
 
 import type { Notification } from "@/types/notification";
 
+
 export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 

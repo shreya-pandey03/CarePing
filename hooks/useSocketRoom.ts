@@ -10,6 +10,7 @@ export function useSocketRoom(userId: string) {
   useEffect(() => {
     if (!socket.connected) return;
 
+    
     socket.emit("join-user-room", userId);
   }, [socket, userId]);
 }

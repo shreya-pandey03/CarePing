@@ -7,7 +7,6 @@ import {
   acceptRecommendation,
   dismissRecommendation,
 } from "@/actions/recommendations";
-
 import type { Recommendation } from "@/types/recommendation";
 
 export function useRecommendations() {

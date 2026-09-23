@@ -8,7 +8,6 @@ import { useSocketStore } from "@/store/socketStore";
 
 export function useSocket() {
   const socket = useSocketContext();
-
   const addHabit = useSocketStore((state) => state.addHabit);
   const updateHabit = useSocketStore((state) => state.updateHabit);
   const deleteHabit = useSocketStore((state) => state.deleteHabit);

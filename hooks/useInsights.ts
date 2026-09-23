@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 
 import { getInsights } from "@/actions/insights/getInsights";
-
 import type { AIInsight } from "@/types/insight";
 
 export function useInsights() {
