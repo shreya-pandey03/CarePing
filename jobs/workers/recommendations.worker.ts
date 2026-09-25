@@ -5,7 +5,6 @@ import { connection } from "@/lib/bullmq";
 import { db } from "@/lib/db";
 
 import { habits, habitLogs, streaks, recommendations } from "@/drizzle/schema";
-
 import { generateRecommendations } from "@/actions/generateRecommendations";
 
 interface RecommendationJobData {

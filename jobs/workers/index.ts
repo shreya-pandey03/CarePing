@@ -16,6 +16,7 @@ process.on("SIGINT", () => {
   process.exit(0);
 });
 
+
 process.on("SIGTERM", () => {
   console.log("Stopping workers...");
   process.exit(0);

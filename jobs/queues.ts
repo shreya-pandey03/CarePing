@@ -10,7 +10,6 @@ export const aiQueue = new Queue("ai-insights", {
   defaultJobOptions: {
     removeOnComplete: 100,
     removeOnFail: 500,
-
     attempts: 3,
 
     backoff: {

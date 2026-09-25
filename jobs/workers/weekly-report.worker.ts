@@ -13,7 +13,6 @@ export const weeklyReportWorker = new Worker(
     try {
       const { userId } = job.data;
       console.log(`Generating Weekly Report for ${userId}`);
-
       const result = await generateWeeklyReport(userId);
 
       console.log("Weekly Report Saved");

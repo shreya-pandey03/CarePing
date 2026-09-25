@@ -10,6 +10,7 @@ interface AIJobData {
   habitId: string;
 }
 
+
 export const aiWorker = new Worker<AIJobData>(
   "ai-insights",
   async (job: Job<AIJobData>) => {

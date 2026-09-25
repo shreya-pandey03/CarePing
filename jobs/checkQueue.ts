@@ -10,7 +10,6 @@ async function checkQueues() {
   console.log(await aiQueue.getJobCounts());
   console.log("\nRecommendation Queue:");
   console.log(await recommendationQueue.getJobCounts());
-
   console.log("\nWeekly Report Queue:");
   console.log(await weeklyReportQueue.getJobCounts());
 

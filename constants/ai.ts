@@ -9,7 +9,6 @@ export const AI_TOP_K = 40;
 export const AI_MAX_OUTPUT_TOKENS = 2048;
 
 export const AI_TIMEOUT = 30_000;
-
 export const AI_CACHE_TTL = 60 * 60; // 1 hour
 
 export const AI_RETRY_ATTEMPTS = 3;

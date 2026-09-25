@@ -10,6 +10,7 @@ interface StreakJobData {
   habitId: string;
 }
 
+
 export const streakWorker = new Worker<StreakJobData>(
   "streaks",
   async (job: Job<StreakJobData>) => {

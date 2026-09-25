@@ -9,6 +9,7 @@ interface MonthlyReportJobData {
   userId: string;
 }
 
+
 export const monthlyReportWorker = new Worker<MonthlyReportJobData>(
   "monthly-reports",
   async (job: Job<MonthlyReportJobData>) => {

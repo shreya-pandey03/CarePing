@@ -10,6 +10,7 @@ interface NotificationJobData {
   userId: string;
 }
 
+
 export const notificationWorker = new Worker<NotificationJobData>(
   "notifications",
 
