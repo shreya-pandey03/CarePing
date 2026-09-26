@@ -12,7 +12,7 @@ async function cleanQueues() {
   await aiQueue.clean(0, 1000, "failed");
   await recommendationQueue.clean(0, 1000, "completed");
   await recommendationQueue.clean(0, 1000, "failed");
-
+  
   await weeklyReportQueue.clean(0, 1000, "completed");
   await weeklyReportQueue.clean(0, 1000, "failed");
 

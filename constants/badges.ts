@@ -74,4 +74,3 @@ export function getBadgesByRarity(
 ) {
   return BADGES.filter((badge) => badge.rarity === rarity);
 }
-

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-
 import { useSocket } from "./useSocket";
 
 export function useSocketRoom(userId: string) {

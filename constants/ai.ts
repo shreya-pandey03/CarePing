@@ -30,5 +30,4 @@ export const MONTHLY_REPORT_CACHE_KEY = "ai:monthly-report";
 export const RECOMMENDATIONS_CACHE_KEY = "ai:recommendations";
 
 export const INSIGHTS_CACHE_KEY = "ai:insights";
-
 export const STREAK_PREDICTION_CACHE_KEY = "ai:streak-prediction";

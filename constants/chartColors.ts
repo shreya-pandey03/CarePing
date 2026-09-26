@@ -20,6 +20,7 @@ export const CHART_PALETTE = [
   "#6366f1",
 ] as const;
 
+
 export const HEATMAP_COLORS = {
   empty: "#ebedf0",
   level1: "#c6e48b",

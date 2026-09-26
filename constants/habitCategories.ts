@@ -11,6 +11,7 @@ import {
   Shapes,
 } from "lucide-react";
 
+
 export const HABIT_CATEGORIES = [
   {
     value: "health",

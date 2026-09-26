@@ -15,6 +15,7 @@ export interface Habit {
   active: boolean;
 }
 
+
 export function useRealtimeHabits(initialHabits: Habit[]) {
   const habits = useRealtimeStore((state) => state.habits);
 

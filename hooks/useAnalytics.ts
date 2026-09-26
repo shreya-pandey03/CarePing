@@ -9,7 +9,6 @@ import type { DashboardAnalytics } from "@/types/analytics";
 export function useAnalytics() {
   const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null);
 
-  
   const [loading, setLoading] = useState(true);
 
   const [error, setError] = useState<string | null>(null);

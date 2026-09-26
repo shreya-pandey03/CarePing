@@ -14,7 +14,6 @@ export function useHabits() {
   const habits = useSocketStore((state) => state.habits);
 
   const [loading, setLoading] = useState(false);
-
   const [error, setError] = useState<string | null>(null);
 
   async function addHabit(values: HabitFormValues) {

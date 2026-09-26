@@ -11,7 +11,6 @@ export function useRealtimeHabits() {
   const updateHabit = useSocketStore((state) => state.updateHabit);
   const deleteHabit = useSocketStore((state) => state.deleteHabit);
   const completeHabit = useSocketStore((state) => state.completeHabit);
-
   
   useEffect(() => {
     socket.on("habit:created", (habit) => {

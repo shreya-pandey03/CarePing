@@ -13,6 +13,7 @@ Return responses in valid JSON whenever requested.
 export const WEEKLY_REPORT_PROMPT = `
 Generate a weekly habit report.
 
+
 Include:
 - Title
 - Summary

@@ -12,6 +12,7 @@ export function useInsights() {
 
   const [error, setError] = useState<string | null>(null);
 
+  
   async function fetchInsights() {
     try {
       setLoading(true);
