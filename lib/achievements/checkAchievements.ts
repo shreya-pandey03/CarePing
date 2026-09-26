@@ -90,6 +90,5 @@ export async function checkAchievements({
       unlockedBadges.push(badge);
     }
   }
-
   return unlockedBadges;
 }

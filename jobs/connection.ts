@@ -7,4 +7,3 @@ export const connection = new Redis(
     maxRetriesPerRequest: null,
   }
 );
-

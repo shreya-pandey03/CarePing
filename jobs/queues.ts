@@ -11,7 +11,6 @@ export const aiQueue = new Queue("ai-insights", {
     removeOnComplete: 100,
     removeOnFail: 500,
     attempts: 3,
-
     backoff: {
       type: "exponential",
       delay: 5000,

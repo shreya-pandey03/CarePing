@@ -5,7 +5,6 @@ import type { AIContext } from "./context";
 import type { AICoachResponse } from "./types";
 
 
-
 const apiKey = process.env.GEMINI_API_KEY;
 
 if (!apiKey) {
