@@ -3,7 +3,6 @@
 import { eq } from "drizzle-orm";
 import { GoogleGenAI } from "@google/genai";
 
-
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { habits, habitLogs, streaks } from "@/drizzle/schema";

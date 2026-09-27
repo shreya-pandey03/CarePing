@@ -8,7 +8,6 @@ export type HabitHealth = {
   status: "Excellent" | "Good" | "Needs Attention";
   completionRate: number;
   currentStreak: number;
-
   completedToday: boolean;
 };
 

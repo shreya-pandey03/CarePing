@@ -1,6 +1,5 @@
 import type { AIContext } from "./context";
 
-
 export function buildInsightsPrompt(context: AIContext) {
   return `
 You are an AI Habit Coach.
