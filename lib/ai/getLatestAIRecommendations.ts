@@ -7,6 +7,7 @@ import { aiInsights } from "@/drizzle/schema";
 export async function getLatestAIRecommendations() {
   const session = await auth();
 
+  
   if (!session?.user?.id) {
     throw new Error("Unauthorized");
   }

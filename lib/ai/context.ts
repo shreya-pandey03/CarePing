@@ -8,7 +8,6 @@ import { calculateHabitHealth } from "@/lib/analytics/habit-health";
 
 export interface AIContext {
   generatedAt: Date;
-
   today: string;
   weekStart: string;
   completionRate: number;

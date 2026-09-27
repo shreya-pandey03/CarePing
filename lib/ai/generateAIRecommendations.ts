@@ -2,7 +2,6 @@
 
 import { GoogleGenAI } from "@google/genai";
 import { eq } from "drizzle-orm";
-
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { redis } from "@/lib/redis";
