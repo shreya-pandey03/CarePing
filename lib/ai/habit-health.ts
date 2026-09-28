@@ -3,7 +3,6 @@ import type { Habit, HabitLog, Streak } from "@/drizzle/schema";
 export type HabitHealth = {
   habitId: string;
   title: string;
-
   score: number;
   status: "Excellent" | "Good" | "Needs Attention";
   completionRate: number;

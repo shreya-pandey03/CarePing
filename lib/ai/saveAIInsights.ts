@@ -4,7 +4,6 @@ import { aiInsights } from "@/drizzle/schema";
 
 import type { AIInsightsResult } from "./generateAIInsights";
 
-
 export async function saveAIInsights(
   result: AIInsightsResult,
 ) {

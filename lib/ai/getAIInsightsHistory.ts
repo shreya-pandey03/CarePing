@@ -20,4 +20,3 @@ export async function getAIInsightsHistory() {
 
   return history;
 }
-
