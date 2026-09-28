@@ -1,5 +1,4 @@
 import { GoogleGenAI } from "@google/genai";
-
 import { buildCoachPrompt } from "./prompt";
 import type { AIContext } from "./context";
 import type { AICoachResponse } from "./types";
