@@ -12,6 +12,7 @@ export interface AIContext {
   weekStart: string;
   completionRate: number;
   completedToday: number;
+  
   totalHabits: number;
   weeklyCompletedCount: number;
   weeklyExpectedCount: number;

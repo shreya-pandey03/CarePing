@@ -10,7 +10,6 @@ export type HabitHealth = {
   completedToday: boolean;
 };
 
-
 export function calculateHabitHealth(
   habits: Habit[],
   logs: HabitLog[],
