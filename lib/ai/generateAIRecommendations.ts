@@ -8,7 +8,6 @@ import { redis } from "@/lib/redis";
 import { habits, habitLogs, streaks } from "@/drizzle/schema";
 import { buildAIContext } from "./context";
 
-
 export interface AIRecommendation {
   title: string;
   description: string;
