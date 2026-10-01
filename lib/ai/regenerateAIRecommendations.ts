@@ -12,7 +12,6 @@ export async function regenerateAIRecommendations() {
   }
 
   const cacheKey = `ai-recommendations:${session.user.id}`;
-  
   await redis.del(cacheKey);
 
   return generateAIRecommendations({

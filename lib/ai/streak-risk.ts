@@ -3,10 +3,8 @@ import type { Habit, HabitLog, Streak } from "@/drizzle/schema";
 export type StreakRisk = {
   habitId: string;
   habit: string;
-
   risk: "low" | "medium" | "high";
   score: number;
-
   recommendation: string;
 };
 

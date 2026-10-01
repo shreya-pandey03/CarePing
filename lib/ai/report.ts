@@ -5,6 +5,7 @@ import type { AICoachResponse } from "./types";
 
 const DAY = 60 * 60 * 24;
 
+
 export async function getCachedAIReport(
   userId: string,
   context: AIContext,

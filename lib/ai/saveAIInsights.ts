@@ -1,7 +1,6 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { aiInsights } from "@/drizzle/schema";
-
 import type { AIInsightsResult } from "./generateAIInsights";
 
 export async function saveAIInsights(

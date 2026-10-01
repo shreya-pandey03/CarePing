@@ -14,7 +14,6 @@ export interface AIInsight {
   type: "positive" | "warning" | "neutral";
 }
 
-
 export interface AIRecommendation {
   title: string;
   description: string;
