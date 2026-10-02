@@ -8,6 +8,7 @@ export type StreakRisk = {
   recommendation: string;
 };
 
+
 export function calculateStreakRisk(
   habits: Habit[],
   logs: HabitLog[],
