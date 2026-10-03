@@ -2,8 +2,7 @@ import type { AIContext } from "./context";
 
 export function buildInsightsPrompt(context: AIContext) {
   return `
-  
-  
+   
 You are an AI Habit Coach.
 
 Analyze the user's habit data carefully and generate a concise, accurate coaching report.

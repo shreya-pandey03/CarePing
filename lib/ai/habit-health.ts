@@ -22,9 +22,8 @@ export function calculateHabitHealth(
 
     const streak = streaks.find((s) => s.habitId === habit.id);
 
-    //----------------------------------------
     // Completion %
-    //----------------------------------------
+
 
     const daysAlive = Math.max(
       1,

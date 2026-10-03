@@ -8,7 +8,6 @@ import { habits, habitLogs, streaks } from "@/drizzle/schema";
 import { buildInsightsPrompt } from "./prompt";
 import { buildAIContext } from "./context";
 
-
 export interface AIInsight {
   title: string;
   description: string;

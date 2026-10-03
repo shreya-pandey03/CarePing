@@ -10,7 +10,6 @@ export async function getCachedAIReport(
   context: AIContext,
 ): Promise<AICoachResponse> {
   const key = `ai:report:${userId}`;
-
   // Check Redis cache
   const cached = await redis.get(key);
 
