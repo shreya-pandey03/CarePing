@@ -15,7 +15,6 @@ export interface AIRecommendation {
   habitId?: string;
 }
 
-
 export interface AIRecommendationsResult {
   recommendations: AIRecommendation[];
   generatedAt: string;
