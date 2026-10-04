@@ -24,7 +24,6 @@ export function calculateHabitHealth(
 
     // Completion %
 
-
     const daysAlive = Math.max(
       1,
       Math.ceil(

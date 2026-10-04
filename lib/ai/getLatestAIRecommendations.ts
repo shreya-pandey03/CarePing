@@ -1,5 +1,4 @@
 import { desc, eq } from "drizzle-orm";
-
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { aiInsights } from "@/drizzle/schema";
