@@ -18,5 +18,6 @@ export async function getAIInsightsHistory() {
     .orderBy(desc(aiInsights.generatedAt))
     .limit(20);
 
+    
   return history;
 }
