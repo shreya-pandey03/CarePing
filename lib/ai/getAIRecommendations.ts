@@ -15,7 +15,6 @@ export async function getAIRecommendations(): Promise<AIRecommendationsResult> {
   }
  
   const cacheKey = `ai-recommendations:${session.user.id}`;  
-   
   const cached = await redis.get(cacheKey);
 
   if (cached) {

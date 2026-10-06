@@ -12,6 +12,7 @@ export async function regenerateAIInsights() {
   }
 
   const userId = session.user.id; 
+  
   const cacheKey = `ai-insights:${userId}`;
 
   await redis.del(cacheKey);
