@@ -10,7 +10,6 @@ import { buildAIContext } from "./context";
 
 export interface AIRecommendation {
   title: string;
-  
   description: string;
   priority: "high" | "medium" | "low";
   habitId?: string;

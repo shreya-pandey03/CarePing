@@ -17,7 +17,6 @@ export async function getAIInsightsHistory() {
     .where(eq(aiInsights.userId, session.user.id))
     .orderBy(desc(aiInsights.generatedAt))
     .limit(20);
-
-    
+ 
   return history;
 }
