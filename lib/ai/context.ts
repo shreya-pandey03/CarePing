@@ -16,6 +16,7 @@ export interface AIContext {
   weeklyCompletedCount: number;
   weeklyExpectedCount: number;
   weeklyMissedCount: number;
+  
   weeklyGrade: ReturnType<typeof calculateWeeklyGrade>; 
   healthScores: Array<
     ReturnType<typeof calculateHabitHealth> & {
