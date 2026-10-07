@@ -14,8 +14,7 @@ export function calculateStreakRisk(
   streaks: Streak[],
 ): StreakRisk[] {
   const today = new Date();
-
-  
+ 
   return habits.map((habit) => {
     const habitLogs = logs
       .filter((log) => log.habitId === habit.id)

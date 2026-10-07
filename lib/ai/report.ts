@@ -13,7 +13,6 @@ export async function getCachedAIReport(
   // Check Redis cache
   const cached = await redis.get(key);
 
-  
   if (cached) {
     return JSON.parse(cached) as AICoachResponse;
   }
