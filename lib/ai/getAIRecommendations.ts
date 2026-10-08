@@ -14,6 +14,7 @@ export async function getAIRecommendations(): Promise<AIRecommendationsResult> {
     throw new Error("Unauthorized");
   }
  
+  
   const cacheKey = `ai-recommendations:${session.user.id}`;   
   const cached = await redis.get(cacheKey);
 
