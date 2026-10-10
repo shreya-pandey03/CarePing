@@ -10,7 +10,6 @@ export async function getLatestAIRecommendations() {
     throw new Error("Unauthorized");
   } 
   
-  
   const result = await db
     .select()
     .from(aiInsights)

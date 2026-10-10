@@ -2,6 +2,7 @@
 
 import { GoogleGenAI } from "@google/genai";
 import { eq } from "drizzle-orm";
+
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { redis } from "@/lib/redis";
@@ -30,7 +31,10 @@ const ai = new GoogleGenAI({ apiKey });
 
 const CACHE_TTL = 60 * 60 * 24;
 
-function parseRecommendations(text: string): AIRecommendationsResult {
+function parseRecommendations(
+  text: string,
+  validHabitIds: Set<string>,
+): AIRecommendation[] {
   const cleaned = text
     .replace(/^```json\s*/i, "")
     .replace(/^```\s*/i, "")
@@ -48,23 +52,40 @@ function parseRecommendations(text: string): AIRecommendationsResult {
     recommendations?: unknown;
   };
 
-  const recommendations = Array.isArray(parsed.recommendations)
-    ? parsed.recommendations.filter(
-        (item): item is AIRecommendation =>
-          (!!item &&
-            typeof item === "object" &&
-            typeof (item as AIRecommendation).title === "string" &&
-            typeof (item as AIRecommendation).description === "string" &&
-            (item as AIRecommendation).priority === "high") ||
-          (item as AIRecommendation).priority === "medium" ||
-          (item as AIRecommendation).priority === "low",
-      )
-    : [];
+  if (!Array.isArray(parsed.recommendations)) {
+    throw new Error("Gemini returned an invalid recommendations array.");
+  }
 
-  return {
-    recommendations,
-    generatedAt: new Date().toISOString(),
-  };
+  return parsed.recommendations
+    .filter((item): item is Record<string, unknown> => {
+      if (!item || typeof item !== "object") {
+        return false;
+      }
+
+      const recommendation = item as Record<string, unknown>;
+
+      return (
+        typeof recommendation.title === "string" &&
+        recommendation.title.trim().length > 0 &&
+        typeof recommendation.description === "string" &&
+        recommendation.description.trim().length > 0 &&
+        ["high", "medium", "low"].includes(recommendation.priority as string)
+      );
+    })
+    .map((item) => {
+      const habitId =
+        typeof item.habitId === "string" && validHabitIds.has(item.habitId)
+          ? item.habitId
+          : undefined;
+
+      return {
+        title: (item.title as string).trim(),
+        description: (item.description as string).trim(),
+        priority: item.priority as AIRecommendation["priority"],
+        ...(habitId ? { habitId } : {}),
+      };
+    })
+    .slice(0, 5);
 }
 
 export async function generateAIRecommendations(options?: {
@@ -78,7 +99,6 @@ export async function generateAIRecommendations(options?: {
 
   const userId = session.user.id;
   const force = options?.force ?? false;
-
   const cacheKey = `ai-recommendations:${userId}`;
 
   if (!force) {
@@ -97,65 +117,81 @@ export async function generateAIRecommendations(options?: {
     db.query.habits.findMany({
       where: eq(habits.userId, userId),
     }),
-
     db.query.habitLogs.findMany({
       where: eq(habitLogs.userId, userId),
     }),
-
     db.query.streaks.findMany({
       where: eq(streaks.userId, userId),
     }),
   ]);
 
-  const context = buildAIContext(userHabits, userLogs, userStreaks);
+  const activeHabits = userHabits.filter(
+    (habit) => habit.active && !habit.archived,
+  );
+
+  const activeHabitIds = new Set(activeHabits.map((habit) => habit.id));
+
+  const activeLogs = userLogs.filter((log) => activeHabitIds.has(log.habitId));
+
+  const activeStreaks = userStreaks.filter((streak) =>
+    activeHabitIds.has(streak.habitId),
+  );
+
+  const context = buildAIContext(activeHabits, activeLogs, activeStreaks);
 
   const prompt = `
-You are an expert AI Habit Coach.
+You are an accurate, practical AI Habit Coach.
 
-Generate personalized, practical recommendations based ONLY on the user's provided habit analytics.
+Generate 3 to 5 personalized recommendations using only the supplied user data.
 
-RULES:
+STRICT DATA RULES:
 
-1. Never invent habits or statistics.
-2. Respect each habit's frequency and targetDays.
-3. Do not treat longestStreak as the current streak.
-4. Do not treat historical streaks as this week's streaks.
-5. Prioritize habits with poor health scores or high streak risk.
-6. Consider current streaks, longest streaks, completion rate, weekly performance and risk.
-7. Recommendations must be actionable.
-8. Do not recommend completing a habit every day unless its frequency is daily.
-9. Do not recommend changing a habit's target without evidence.
-10. Do not make medical, financial, or psychological claims.
-11. Keep recommendations concise.
-12. Return JSON only.
-13. Do not return Markdown.
-14. Do not return code fences.
-15. Do not invent reasons for poor performance.
+1. Never invent statistics, habits, dates, streaks, scores, or events.
+2. Use only habit titles and IDs present in the supplied data.
+3. Respect each habit's frequency and targetDays.
+4. A daily completion rate is not the same as weekly completion.
+5. A weekly grade is not the same as a completion percentage.
+6. A current streak is not the same as a historical longest streak.
+7. Never claim that a historical streak occurred this week unless the data proves it.
+8. weeklyCompletedCount is the number of recorded completions, not the number of unique habits.
+9. weeklyExpectedCount is the expected number of completions, not the number of habits.
+10. weeklyMissedCount must not be described as the number of different habits.
+11. Do not quote a statistic unless it is explicitly present in the supplied data.
+12. Do not claim all habits have a particular health score or streak unless the data supports that claim.
+13. Do not claim a habit is at high risk solely because its current streak is short.
+14. A habit completed today can still need consistency improvements, but explain this without contradicting today's completion.
+15. If metrics appear inconsistent, avoid quoting the conflicting numbers.
+16. Respect daily, weekly, and monthly frequencies. Do not tell users to complete weekly or monthly habits every day.
+17. Do not invent reasons for missed completions.
+18. Give practical, specific actions that the user can follow.
+19. Use high priority only for a clearly supported, important issue.
+20. If the data shows strong performance, recommend maintaining it rather than manufacturing problems.
 
-Recommendation priority:
+PRIORITY:
 
-- high = immediate attention needed
-- medium = useful improvement
-- low = maintenance or optimization
+- high: a clearly supported issue needing prompt attention
+- medium: a useful, measurable improvement
+- low: maintenance or an optional optimization
 
-USER DATA:
+USER ANALYTICS:
 
 ${JSON.stringify(context, null, 2)}
 
-Return EXACTLY:
+Return valid JSON only, with this structure:
 
 {
   "recommendations": [
     {
-      "title": "Recommendation title",
-      "description": "Specific actionable recommendation",
-      "priority": "high | medium | low",
-      "habitId": "habit id when directly related to a habit"
+      "title": "Short recommendation title",
+      "description": "Specific, realistic action based on the supplied data",
+      "priority": "high",
+      "habitId": "existing habit ID when relevant"
     }
   ]
 }
 
-Generate between 3 and 5 recommendations.
+Use "medium" or "low" when appropriate instead of marking every recommendation high priority.
+Omit habitId when a recommendation applies generally.
 `;
 
   try {
@@ -170,7 +206,16 @@ Generate between 3 and 5 recommendations.
       throw new Error("Gemini returned an empty response.");
     }
 
-    const result = parseRecommendations(text);
+    const recommendations = parseRecommendations(text, activeHabitIds);
+
+    if (recommendations.length === 0) {
+      throw new Error("Gemini returned no valid recommendations.");
+    }
+
+    const result: AIRecommendationsResult = {
+      recommendations,
+      generatedAt: new Date().toISOString(),
+    };
 
     await redis.set(cacheKey, JSON.stringify(result), "EX", CACHE_TTL);
 
