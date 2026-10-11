@@ -1,4 +1,5 @@
 import type { InferSelectModel } from "drizzle-orm";
+
 import { habits, habitLogs, streaks } from "@/drizzle/schema";
 
 type Habit = InferSelectModel<typeof habits>;

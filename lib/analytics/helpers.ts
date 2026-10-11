@@ -13,7 +13,6 @@ export function getWeekRange() {
   };
 }
 
-
 export function getMonthRange() {
   const now = new Date();
 

@@ -12,6 +12,7 @@ export function calculateCompletionPercentage(
     ) + 1;
 
   const activeHabits = habits.filter((habit) => habit.createdAt <= endDate);
+  
   const expectedCompletions = activeHabits.length * totalDays;
 
   const completed = logs.filter((log) => {
