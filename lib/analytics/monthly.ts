@@ -5,7 +5,6 @@ import { habits, habitLogs } from "@/drizzle/schema";
 
 export async function getMonthlyAnalytics(userId: string) {
   const now = new Date();
-
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
   const start = new Date(year, now.getMonth(), 1);

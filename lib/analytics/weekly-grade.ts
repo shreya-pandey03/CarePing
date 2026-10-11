@@ -6,6 +6,7 @@ import {
   startOfWeek,
 } from "date-fns";
 
+
 export type WeeklyGrade = {
   score: number;
   grade: "A+" | "A" | "B" | "C" | "D" | "F";

@@ -13,6 +13,7 @@ export type StreakPrediction = {
   recommendation: string;
 };
 
+
 export function predictStreakRisk(
   habit: Habit,
   logs: HabitLog[],

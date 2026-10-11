@@ -1,6 +1,5 @@
 import { and, eq, gte, lte } from "drizzle-orm";
 import { startOfWeek, endOfWeek, format } from "date-fns";
-
 import { db } from "@/lib/db";
 import { habits, habitLogs } from "@/drizzle/schema";
 

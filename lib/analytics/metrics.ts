@@ -7,7 +7,6 @@ type Streak = typeof streaks.$inferSelect;
 export interface HabitMetrics {
   habitId: string;
   title: string;
-
   totalCompletions: number;
 
   completionRate: number;

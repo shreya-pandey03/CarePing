@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { habitLogs, habits } from "@/drizzle/schema";
+
 import { eq, and } from "drizzle-orm";
 
 export async function getHeatmapData(userId: string) {

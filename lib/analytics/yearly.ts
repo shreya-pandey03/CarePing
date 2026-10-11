@@ -5,7 +5,6 @@ import { habits, habitLogs } from "@/drizzle/schema";
 
 export async function getYearlyAnalytics(userId: string) {
   const now = new Date();
-
   const year = now.getFullYear();
 
   const start = new Date(year, 0, 1);
