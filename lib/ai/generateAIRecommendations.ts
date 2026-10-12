@@ -20,7 +20,6 @@ export interface AIRecommendationsResult {
   recommendations: AIRecommendation[];
   generatedAt: string;
 }
-
 const apiKey = process.env.GEMINI_API_KEY;
 
 if (!apiKey) {
