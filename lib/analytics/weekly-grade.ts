@@ -1,11 +1,5 @@
 import type { Habit, HabitLog, Streak } from "@/drizzle/schema";
-import {
-  differenceInCalendarDays,
-  endOfMonth,
-  endOfWeek,
-  startOfWeek,
-} from "date-fns";
-
+import { differenceInCalendarDays, endOfMonth, startOfWeek } from "date-fns";
 
 export type WeeklyGrade = {
   score: number;
@@ -21,14 +15,17 @@ export type WeeklyGrade = {
   feedback: string;
 };
 
+function getDayKey(date: Date): string {
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+}
+
 export function calculateWeeklyGrade(
   habits: Habit[],
   logs: HabitLog[],
   _streaks: Streak[],
 ): WeeklyGrade {
   const now = new Date();
-  const weekStart = startOfWeek(now);
-  const weekEnd = endOfWeek(now);
+  const weekStart = startOfWeek(now, { weekStartsOn: 0 });
 
   const activeHabits = habits.filter(
     (habit) => habit.active && !habit.archived,
@@ -43,16 +40,14 @@ export function calculateWeeklyGrade(
       log.completed &&
       activeHabitIds.has(log.habitId) &&
       completedAt >= weekStart &&
-      completedAt <= now &&
-      completedAt <= weekEnd
+      completedAt <= now
     );
   });
 
   const completedDatesByHabit = new Map<string, Set<string>>();
 
   for (const log of weeklyLogs) {
-    const date = new Date(log.completedAt);
-    const dayKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+    const dayKey = getDayKey(new Date(log.completedAt));
 
     if (!completedDatesByHabit.has(log.habitId)) {
       completedDatesByHabit.set(log.habitId, new Set());
@@ -65,8 +60,9 @@ export function calculateWeeklyGrade(
   const totalHabits = activeHabits.length;
   const daysElapsedThisWeek = differenceInCalendarDays(now, weekStart) + 1;
 
-  let expectedCompletions = 0;
+  const daysInMonth = endOfMonth(now).getDate();
   let completedCompletions = 0;
+  let expectedCompletions = 0;
   let missedHabits = 0;
 
   for (const habit of activeHabits) {
@@ -78,12 +74,11 @@ export function calculateWeeklyGrade(
     let expectedForHabit = 0;
 
     if (habit.frequency === "daily") {
-      expectedForHabit = daysElapsedThisWeek * targetDays;
+      expectedForHabit = daysElapsedThisWeek;
     } else if (habit.frequency === "weekly") {
-      expectedForHabit = targetDays;
+      expectedForHabit = Math.ceil((targetDays * daysElapsedThisWeek) / 7);
     } else if (habit.frequency === "monthly") {
-      const daysInMonth = endOfMonth(now).getDate();
-      expectedForHabit = Math.ceil(targetDays * (now.getDate() / daysInMonth));
+      expectedForHabit = Math.ceil((targetDays * now.getDate()) / daysInMonth);
     }
 
     expectedCompletions += expectedForHabit;
