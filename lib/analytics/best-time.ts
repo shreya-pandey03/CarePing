@@ -14,7 +14,6 @@ export type BestTimeResult = {
   night: number;
 };
 
-
 function getIndiaHour(date: Date) {
   const formatted = new Intl.DateTimeFormat("en-IN", {
     timeZone: "Asia/Kolkata",

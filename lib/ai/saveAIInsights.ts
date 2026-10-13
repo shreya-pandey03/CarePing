@@ -12,6 +12,7 @@ export async function saveAIInsights(
     throw new Error("Unauthorized");
   }
 
+  
   const [saved] = await db
     .insert(aiInsights)
     .values({
