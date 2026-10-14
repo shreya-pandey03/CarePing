@@ -12,8 +12,7 @@ export async function getCachedAIReport(
   const key = `ai:report:${userId}`;
   // Check Redis cache
   const cached = await redis.get(key);
-
-  
+ 
   if (cached) {
     return JSON.parse(cached) as AICoachResponse;
   }

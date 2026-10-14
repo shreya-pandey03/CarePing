@@ -14,7 +14,6 @@ export function calculateStreakRisk(
   streaks: Streak[],
 ): StreakRisk[] {
   const today = new Date();
- 
   
   return habits.map((habit) => {
     const habitLogs = logs
@@ -28,9 +27,7 @@ export function calculateStreakRisk(
 
     let score = 0;
 
-    //-----------------------------------
     // Completed today?
-    //-----------------------------------
 
     const completedToday = habitLogs.some((log) => {
       const d = new Date(log.completedAt);
@@ -44,10 +41,9 @@ export function calculateStreakRisk(
 
     if (!completedToday) score += 35;
 
-    //-----------------------------------
     // Current streak
-    //-----------------------------------
 
+    
     const currentStreak = streak?.currentStreak ?? 0;
 
     if (currentStreak === 0) score += 25;

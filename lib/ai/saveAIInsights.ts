@@ -11,8 +11,7 @@ export async function saveAIInsights(
   if (!session?.user?.id) {
     throw new Error("Unauthorized");
   }
-
-  
+ 
   const [saved] = await db
     .insert(aiInsights)
     .values({

@@ -11,8 +11,7 @@ export async function regenerateAIRecommendations() {
     throw new Error("Unauthorized");
   }
 
-  const cacheKey = `ai-recommendations:${session.user.id}`;
-  
+  const cacheKey = `ai-recommendations:${session.user.id}`; 
   await redis.del(cacheKey);
 
   return generateAIRecommendations({

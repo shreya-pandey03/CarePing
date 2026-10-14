@@ -1,4 +1,5 @@
 import type { Habit, HabitLog, Streak } from "@/drizzle/schema";
+import { differenceInCalendarDays, startOfDay } from "date-fns";
 
 export type StreakPrediction = {
   habitId: string;
@@ -13,29 +14,77 @@ export type StreakPrediction = {
   recommendation: string;
 };
 
+function getCompletedDays(logs: HabitLog[]): Date[] {
+  const uniqueDays = new Map<string, Date>();
+
+  for (const log of logs) {
+    if (!log.completed) continue;
+
+    const date = startOfDay(new Date(log.completedAt));
+    const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+
+    uniqueDays.set(key, date);
+  }
+
+  return [...uniqueDays.values()].sort((a, b) => b.getTime() - a.getTime());
+}
+
+function calculateCurrentStreak(completedDays: Date[], now: Date): number {
+  if (completedDays.length === 0) return 0;
+
+  const today = startOfDay(now);
+  const latestDay = completedDays[0];
+  const daysSinceLatest = differenceInCalendarDays(today, latestDay);
+
+  if (daysSinceLatest > 1) return 0;
+
+  let currentStreak = 1;
+
+  for (let i = 0; i < completedDays.length - 1; i++) {
+    const difference = differenceInCalendarDays(
+      completedDays[i],
+      completedDays[i + 1],
+    );
+
+    if (difference === 1) {
+      currentStreak++;
+    } else {
+      break;
+    }
+  }
+
+  return currentStreak;
+}
 
 export function predictStreakRisk(
   habit: Habit,
   logs: HabitLog[],
   streak?: Streak,
 ): StreakPrediction {
-  const currentStreak = streak?.currentStreak ?? 0;
-  const longestStreak = streak?.longestStreak ?? 0;
-  const totalCompletions = streak?.totalCompletions ?? 0;
+  const now = new Date();
 
   const habitLogs = logs
-    .filter((log) => log.habitId === habit.id)
+    .filter(
+      (log) =>
+        log.habitId === habit.id &&
+        log.completed &&
+        new Date(log.completedAt) <= now,
+    )
     .sort(
       (a, b) =>
-        new Date(b.completedAt).getTime() -
-        new Date(a.completedAt).getTime(),
+        new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime(),
     );
 
-  if (habitLogs.length === 0) {
+  const completedDays = getCompletedDays(habitLogs);
+  const currentStreak = calculateCurrentStreak(completedDays, now);
+  const longestStreak = Math.max(streak?.longestStreak ?? 0, currentStreak);
+  const totalCompletions = streak?.totalCompletions ?? habitLogs.length;
+
+  if (completedDays.length === 0) {
     return {
       habitId: habit.id,
       habitTitle: habit.title,
-      currentStreak,
+      currentStreak: 0,
       longestStreak,
       totalCompletions,
       riskScore: 80,
@@ -47,14 +96,9 @@ export function predictStreakRisk(
     };
   }
 
-  const latestLog = habitLogs[0];
-
-  const daysSinceLastCompletion = Math.max(
-    0,
-    Math.floor(
-      (Date.now() - new Date(latestLog.completedAt).getTime()) /
-        (1000 * 60 * 60 * 24),
-    ),
+  const daysSinceLastCompletion = differenceInCalendarDays(
+    startOfDay(now),
+    completedDays[0],
   );
 
   let riskScore = 0;
@@ -75,30 +119,12 @@ export function predictStreakRisk(
     riskScore -= 8;
   }
 
-  const now = new Date();
+  const sevenDaysAgo = startOfDay(now);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
 
-  let recentCompletions = 0;
-
-  for (let i = 0; i < 7; i++) {
-    const date = new Date(now);
-
-    date.setHours(0, 0, 0, 0);
-    date.setDate(date.getDate() - i);
-
-    const completedThatDay = habitLogs.some((log) => {
-      const completedAt = new Date(log.completedAt);
-
-      return (
-        completedAt.getFullYear() === date.getFullYear() &&
-        completedAt.getMonth() === date.getMonth() &&
-        completedAt.getDate() === date.getDate()
-      );
-    });
-
-    if (completedThatDay) {
-      recentCompletions++;
-    }
-  }
+  const recentCompletions = completedDays.filter(
+    (date) => date >= sevenDaysAgo && date <= startOfDay(now),
+  ).length;
 
   const recentConsistency = recentCompletions / 7;
 
