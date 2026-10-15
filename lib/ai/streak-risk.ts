@@ -50,9 +50,9 @@ export function calculateStreakRisk(
     else if (currentStreak < 3) score += 15;
     else if (currentStreak < 7) score += 5;
 
-    //-----------------------------------
+
     // Last completion age
-    //-----------------------------------
+ 
 
     if (habitLogs.length > 0) {
       const last = new Date(habitLogs[0].completedAt);
