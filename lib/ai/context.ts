@@ -107,6 +107,7 @@ export function buildAIContext(
     };
   });
 
+  
   const sortedHealthScores = [...healthScores].sort(
     (a, b) => b.score - a.score,
   ); 
