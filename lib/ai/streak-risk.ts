@@ -65,9 +65,9 @@ export function calculateStreakRisk(
       score += 30;
     }
 
-    //-----------------------------------
+
     // Completion consistency
-    //-----------------------------------
+ 
 
     const daysAlive = Math.max(
       1,
