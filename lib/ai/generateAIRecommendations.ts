@@ -193,7 +193,6 @@ Return valid JSON only, with this structure:
 Use "medium" or "low" when appropriate instead of marking every recommendation high priority.
 Omit habitId when a recommendation applies generally.
 `;
-
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
