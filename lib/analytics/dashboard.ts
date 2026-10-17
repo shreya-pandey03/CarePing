@@ -7,7 +7,6 @@ export async function getDashboardAnalytics(userId: string) {
   const userHabits = await db.query.habits.findMany({
     where: and(eq(habits.userId, userId), eq(habits.active, true)),
   });
- 
   const today = new Date();
 
   today.setHours(0, 0, 0, 0);

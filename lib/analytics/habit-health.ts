@@ -4,6 +4,7 @@ import { habits, habitLogs, streaks } from "@/drizzle/schema";
 
 type Habit = InferSelectModel<typeof habits>;
 type HabitLog = InferSelectModel<typeof habitLogs>;
+
 type Streak = InferSelectModel<typeof streaks>;
 
 export type HabitHealthStatus = "excellent" | "good" | "warning" | "critical";

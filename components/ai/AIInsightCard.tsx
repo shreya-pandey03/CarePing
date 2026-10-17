@@ -1,7 +1,6 @@
 "use client";
 
 import { AlertTriangle, Sparkles, TrendingUp } from "lucide-react";
-
 import {
   Card,
   CardContent,
