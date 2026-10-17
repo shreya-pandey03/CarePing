@@ -15,6 +15,7 @@ export type HabitScoreResult = {
   label: string;
 };
 
+
 /**
  * Calculate the overall score of a single habit.
  *

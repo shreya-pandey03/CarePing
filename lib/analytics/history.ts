@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { habits, habitLogs, streaks } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
+
 import { calculateCompletionRate, calculateConsistency } from "@/lib/analytics";
 
 export async function getCompletionHistory(userId: string) {

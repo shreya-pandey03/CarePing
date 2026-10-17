@@ -13,7 +13,6 @@ export async function getHeatmapData(userId: string) {
   });
 
   const totalHabits = userHabits.length;
- 
   const heatmap = new Map<
     string,
     {

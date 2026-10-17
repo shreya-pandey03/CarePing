@@ -8,7 +8,6 @@ export interface HabitMetrics {
   habitId: string;
   title: string;
   totalCompletions: number;
-
   completionRate: number;
   consistency: number;
 

@@ -5,6 +5,7 @@ export type StreakPrediction = {
   habitId: string;
   habitTitle: string;
   currentStreak: number;
+  
   longestStreak: number;
   totalCompletions: number;
   riskScore: number;

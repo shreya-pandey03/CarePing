@@ -9,6 +9,7 @@ export type WeeklyGrade = {
   totalHabits: number;
   completedCompletions: number;
   expectedCompletions: number;
+  
   missedCompletions: number;
   weeklyLongestStreak: number;
   missedHabits: number;

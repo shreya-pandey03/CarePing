@@ -16,6 +16,7 @@ export async function getWeeklyAnalytics(userId: string) {
     where: and(eq(habits.userId, userId), eq(habits.active, true)),
   });
 
+  
   const logs = await db.query.habitLogs.findMany({
     where: and(
       eq(habitLogs.userId, userId),
