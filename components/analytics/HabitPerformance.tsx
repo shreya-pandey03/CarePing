@@ -9,6 +9,7 @@ interface Props {
     totalCompleted: number;
     completionRate: number;
     currentStreak: number;
+    
     longestStreak: number;
     lastCompleted: Date | null;
   }[];
