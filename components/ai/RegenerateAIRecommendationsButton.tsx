@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import { RefreshCw, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
-
 import { Button } from "@/components/ui/button";
 import { regenerateAIRecommendations } from "@/lib/ai/regenerateAIRecommendations";
 

@@ -7,7 +7,6 @@ import {
   Target,
   Trophy,
 } from "lucide-react";
-
 import {
   Card,
   CardContent,

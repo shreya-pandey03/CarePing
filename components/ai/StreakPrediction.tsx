@@ -3,7 +3,6 @@
 import { AlertTriangle, CheckCircle2, Flame } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
 import { Badge } from "@/components/ui/badge";
 
 import type { StreakPrediction as StreakPredictionData } from "@/lib/analytics/streak-prediction";

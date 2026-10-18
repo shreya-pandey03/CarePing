@@ -8,7 +8,6 @@ import {
   Lightbulb,
   Sparkles,
 } from "lucide-react";
-
 import {
   Card,
   CardContent,
