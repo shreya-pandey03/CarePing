@@ -7,6 +7,7 @@ import type { BestTimeResult } from "@/lib/analytics/best-time";
 interface Props {
   data: BestTimeResult[];
 }
+
 const periodConfig = {
   morning: {
     label: "Morning",
