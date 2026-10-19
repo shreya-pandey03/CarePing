@@ -12,7 +12,6 @@ export default function StatsCard({ title, value, icon }: Props) {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">{title}</p>
-
           <h2 className="mt-2 text-3xl font-bold">{value}</h2>
         </div>
 
