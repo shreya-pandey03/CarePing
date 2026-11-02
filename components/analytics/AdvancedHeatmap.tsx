@@ -21,7 +21,6 @@ export default function AdvancedHeatmap({ data }: Props) {
 
     end: today,
   });
-
   const dataMap = new Map(data.map((item) => [item.date, item]));
 
   const getLevel = (completionRate: number) => {
