@@ -3,7 +3,6 @@
 import { Activity, Flame, Target } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
 import type { HabitScore } from "@/lib/habit-score/types";
 
 interface Props {

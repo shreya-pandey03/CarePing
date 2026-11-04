@@ -8,7 +8,6 @@ export default function MonthlyOverview({ monthly }: { monthly: any }) {
         </p>
 
         <p>Completion Rate: {monthly.completionRate}%</p>
-
         <p>Completed Habits: {monthly.completedHabits}</p>
 
         <p>Total Habits: {monthly.totalHabits}</p>

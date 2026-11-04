@@ -14,7 +14,6 @@ export default function StatsCard({ title, value, icon }: Props) {
           <p className="text-sm text-muted-foreground">{title}</p>
           <h2 className="mt-2 text-3xl font-bold">{value}</h2>
         </div>
-
         {icon}
       </div>
     </div>

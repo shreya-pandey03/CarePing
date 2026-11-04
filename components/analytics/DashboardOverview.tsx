@@ -7,7 +7,6 @@ import {
   Activity,
 } from "lucide-react";
 
-
 import StatsCard from "./StatsCard";
 
 export default function DashboardOverview({ stats }: { stats: any }) {

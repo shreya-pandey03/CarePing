@@ -7,7 +7,6 @@ export default function WeeklyOverview({ weekly }: { weekly: any }) {
         <p>Week: {weekly.currentWeek}</p>
 
         <p>Completion Rate: {weekly.completionRate}%</p>
-
         <p>Completed Habits: {weekly.completedHabits}</p>
 
         <p>Total Habits: {weekly.totalHabits}</p>

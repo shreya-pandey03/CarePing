@@ -8,7 +8,6 @@ import { Progress } from "@/components/ui/progress";
 
 interface HabitHealth {
   habitId: string;
-
   title: string;
 
   score: number;

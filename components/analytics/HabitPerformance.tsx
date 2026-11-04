@@ -14,6 +14,7 @@ interface Props {
   }[];
 }
 
+
 export default function HabitPerformance({ data }: Props) {
   return (
     <div className="grid gap-6 md:grid-cols-2">

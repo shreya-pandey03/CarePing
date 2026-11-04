@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 import type { WeeklyGrade } from "@/lib/weekly-grade/types";
 
 interface Props {
