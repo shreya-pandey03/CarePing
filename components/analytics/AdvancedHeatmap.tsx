@@ -15,6 +15,7 @@ interface Props {
 
 export default function AdvancedHeatmap({ data }: Props) {
   const today = new Date();
+  
   const days = eachDayOfInterval({
     start: subDays(today, 180),
 
