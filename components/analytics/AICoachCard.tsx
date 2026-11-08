@@ -20,7 +20,7 @@ export default function AICoachCard({
     <Card>
       <CardHeader>
         <CardTitle>
-          🤖 AI Coach
+           AI Coach
         </CardTitle>
       </CardHeader>
 
