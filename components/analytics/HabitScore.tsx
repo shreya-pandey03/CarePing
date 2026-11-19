@@ -1,7 +1,6 @@
 "use client";
 
 import { Activity, CheckCircle2, Flame } from "lucide-react";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { HabitScore as HabitScoreData } from "@/lib/analytics/habit-score";
 

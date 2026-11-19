@@ -8,7 +8,6 @@ interface HabitHealth {
   habitId: string;
   title: string;
   score: number;
-
   status: "Excellent" | "Good" | "Needs Attention";
   completionRate: number;
 
