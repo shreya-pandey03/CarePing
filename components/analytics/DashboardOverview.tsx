@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import StatsCard from "./StatsCard";
 
-
 export default function DashboardOverview({ stats }: { stats: any }) {
   return (
     <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
