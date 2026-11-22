@@ -14,6 +14,7 @@ interface HabitHealth {
   completedToday: boolean;
 }
 
+
 interface Props {
   data: HabitHealth[];
 }
