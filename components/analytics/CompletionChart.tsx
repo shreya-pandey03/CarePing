@@ -11,7 +11,6 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-
 interface CompletionData {
   date: string;
   completionRate: number;

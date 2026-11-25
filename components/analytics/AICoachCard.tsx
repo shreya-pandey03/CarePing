@@ -3,7 +3,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { AICoachResponse } from "@/lib/ai/types";
 
-
 interface Props {
   report: AICoachResponse;
 }
