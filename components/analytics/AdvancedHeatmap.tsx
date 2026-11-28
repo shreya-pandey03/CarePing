@@ -3,6 +3,7 @@
 import { eachDayOfInterval, format, subDays } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+
 interface HeatmapData {
   date: string;
   count?: number;
